@@ -64,7 +64,7 @@ The installer also makes the following powerful open-source tools **available fo
 
 ✅ [**n8n Assistant sandbox**](https://docs.n8n.io/deploy/host-n8n/configure-n8n/set-up-n8n-assistant) - Code-execution sandbox for n8n's built-in AI Assistant and the Agents preview (n8n's own sandbox service, Docker-in-Docker isolated with Sysbox; internal only, see [below](#n8n-assistant-sandbox-ai-assistant--agents)).
 
-✅ [**ComfyUI**](https://github.com/comfyanonymous/ComfyUI) - A powerful, node-based UI for Stable Diffusion workflows. Build and run image-generation pipelines visually, with support for custom nodes and extensions.
+✅ [**ComfyUI**](https://github.com/comfyanonymous/ComfyUI) - A powerful, node-based UI for Stable Diffusion workflows. Build and run image-generation pipelines visually, with support for custom nodes and extensions. Runs on NVIDIA, AMD or CPU (chosen in the wizard).
 
 ✅ [**Crawl4ai**](https://github.com/unclecode/crawl4ai) - A flexible web crawler designed for AI, enabling you to extract data from websites for your projects.
 
@@ -191,9 +191,9 @@ After successful installation, your services are up and running! Here's how to g
     The installation script provided a summary report with all access URLs and credentials. Please refer to that report. The main services will be available at the following addresses (replace `yourdomain.com` with your actual domain):
 
     - **n8n:** `n8n.yourdomain.com` (Log in with the email address you provided during installation and the initial password from the summary report. You may be prompted to change this password on first login.)
-    - **n8n-MCP:** `n8n-mcp.yourdomain.com` (MCP endpoint at `/mcp`. Every request must send `Authorization: Bearer <N8N_MCP_AUTH_TOKEN>` - the token is on the Welcome Page - so a browser visit returns 401 by design. Connect with `npx -y mcp-remote https://n8n-mcp.yourdomain.com/mcp --header "Authorization: Bearer <token>"`, or keep the token out of your shell history and process list with `--header-file <path>` pointing at a file containing `Authorization: Bearer <token>`. Starts in documentation-only mode; to also manage workflows, create an API key in n8n under Settings -> n8n API, set `N8N_API_KEY` in `.env` and run `make restart`. Note that outside n8n Enterprise an API key has full account access.)
+    - **n8n-MCP:** `n8n-mcp.yourdomain.com` (MCP endpoint at `/mcp`. Every request must send `Authorization: Bearer <N8N_MCP_AUTH_TOKEN>` - the token is on the Welcome Page - so a browser visit returns 401 by design. Connect with `npx -y mcp-remote https://n8n-mcp.yourdomain.com/mcp --header "Authorization: Bearer <token>"`, or keep the token out of your shell history and process list with `--header-file <path>` pointing at a file containing `Authorization: Bearer <token>`. Starts in documentation-only mode; to also manage workflows, create an API key in n8n under Settings -> n8n API, set `N8N_API_KEY` in `.env` and run `make restart`. Note that outside n8n Enterprise an API key has full account access. Optionally set `N8N_MCP_ACCESS_TOKEN` (n8n Settings -> Instance-level MCP -> Connect -> API key; n8n 2.34+) for the tools only n8n's own MCP server provides - see `.env.example`.)
     - **Appsmith:** `appsmith.yourdomain.com` (Low-code app builder)
-    - **ComfyUI:** `comfyui.yourdomain.com` (Node-based Stable Diffusion UI)
+    - **ComfyUI:** `comfyui.yourdomain.com` (Node-based Stable Diffusion UI; the wizard asks for NVIDIA, AMD or CPU. Models and custom nodes persist in the `comfyui_data` volume; on NVIDIA, reserve GPUs with `COMFYUI_GPU_COUNT` or pin them with `COMFYUI_GPU_DEVICES`)
     - **Databasus:** `databasus.yourdomain.com`
     - **Dify:** `dify.yourdomain.com` (AI application development platform with comprehensive LLMOps capabilities)
     - **Docling:** `docling.yourdomain.com` (Universal document converter with REST API; web UI available at `/ui`)
@@ -355,6 +355,15 @@ OLLAMA3_MAX_LOADED_MODELS=1
 ```
 
 The runtime tuning variables — `KEEP_ALIVE`, `NUM_PARALLEL`, `MAX_LOADED_MODELS`, `CONTEXT_LENGTH`, `KV_CACHE_TYPE`, `GPU_OVERHEAD`, `SCHED_SPREAD` — can be set per instance with an `OLLAMA<N>_` prefix, and an unset one falls back to the global value. These take effect on the next `make restart`, with no regeneration needed. (`OLLAMA_GPU_COUNT` has no per-instance form, and `OLLAMA<N>_GPU_DEVICES` does not fall back to the global `OLLAMA_GPU_DEVICES` — it defaults to GPU N-1.)
+
+Anything beyond those knobs — llama.cpp `LLAMA_ARG_*` variables, ROCm `HSA_OVERRIDE_GFX_VERSION`, and so on — goes into optional env files next to `.env`: `ollama.env` applies to every instance, `ollama<N>.env` to one instance and overrides `ollama.env`. A typical use is a smaller free-VRAM margin on a GPU that serves nothing but one Ollama instance:
+
+```env
+# ollama2.env - this GPU serves only ollama2, so leave less VRAM unused
+LLAMA_ARG_FIT_TARGET=128
+```
+
+The files are gitignored and applied on the next `make restart`. Only llama-server-backed models read `LLAMA_ARG_*`; models running on Ollama's own engine ignore them. Keep the `OLLAMA_*` knobs listed above in `.env` — those values win over the files; any other `OLLAMA_*` variable belongs in the files.
 
 Notes:
 

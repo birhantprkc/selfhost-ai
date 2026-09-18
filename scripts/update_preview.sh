@@ -140,6 +140,17 @@ elif is_profile_active "invokeai-cpu"; then
     check_image_update "invokeai" "ghcr.io/invoke-ai/invokeai:main-cpu"
 fi
 
+if is_profile_active "comfyui-nvidia"; then
+    log_subheader "ComfyUI"
+    check_image_update "comfyui" "yanwk/comfyui-boot:cu126-slim"
+elif is_profile_active "comfyui-amd"; then
+    log_subheader "ComfyUI"
+    check_image_update "comfyui" "yanwk/comfyui-boot:rocm"
+elif is_profile_active "comfyui-cpu"; then
+    log_subheader "ComfyUI"
+    check_image_update "comfyui" "yanwk/comfyui-boot:cpu"
+fi
+
 if is_profile_active "qdrant"; then
     log_subheader "Qdrant"
     check_image_update "qdrant" "qdrant/qdrant:latest"

@@ -180,6 +180,7 @@ This project uses [Semantic Versioning](https://semver.org/). When updating `CHA
 - **The templates deliberately carry no `deploy:` block.** Compose *appends* `deploy.resources.reservations.devices` across `extends`, so a count-based reservation on the template would leak an extra, arbitrary GPU into every instance that pins specific device IDs. Do not add one.
 - Instance 1 is the stock `ollama` container and is never modified; count 1 generates nothing and **removes** a stale file, which otherwise resurrects the old instance set after a downscale
 - Per-instance tuning uses `OLLAMA<N>_*` variables emitted as nested defaults (`${OLLAMA2_KEEP_ALIVE:-${OLLAMA_KEEP_ALIVE:-}}`), so users tune `.env` and restart without regenerating
+- Anything else (llama.cpp `LLAMA_ARG_*`, ROCm vars) comes from optional, gitignored env files: `ollama.env` on the `x-ollama` anchor (inherited by every instance via `extends`) and `ollama<N>.env` emitted per instance, both `required: false`. **Never map such variables through `environment:` with `${VAR:-}`** - an empty `LLAMA_ARG_FIT_TARGET` makes llama-server exit at startup (`std::stoull("")`), and `environment:` keys override the files
 - NVIDIA pins via `deploy.…device_ids`; AMD pins via `HIP_VISIBLE_DEVICES`/`ROCR_VISIBLE_DEVICES` (ROCm passes all devices through)
 - All instances share the `ollama_storage` volume, so models are downloaded once; only instance 1 has a model-pull job
 - No published ports and no Caddy block for extra instances - they are internal (`ollama2:11434`); `caddy-addon/site-*.conf` is the documented extension point
@@ -262,6 +263,7 @@ Key functions:
 - `get_real_user` / `get_real_user_home` - Get actual user even under sudo
 - `backup_preserved_dirs` / `restore_preserved_dirs` - Directory preservation for git updates
 - `cleanup_legacy_n8n_workers` - Remove old n8n worker containers from previous naming convention
+- `cleanup_legacy_comfyui` - Remove the pre-1.13 `comfyui` container (service renamed to `comfyui-*`, container name kept) so `up` does not hit a name conflict
 - `get_n8n_workers_compose` / `get_supabase_compose` / `get_dify_compose` - Get compose file path if profile active AND file exists
 - `get_ollama_instances_compose` / `get_open_webui_postgres_compose` - Conditional compose overrides (multi-Ollama, Open WebUI on Postgres)
 - `harden_supabase_gateway_bind` - Keep the Supabase API gateway bound to loopback (issue #108)
@@ -277,6 +279,7 @@ Common profiles:
 - `langfuse`: Langfuse observability (includes ClickHouse, MinIO, worker, web)
 - `cpu`, `gpu-nvidia`, `gpu-amd`: Ollama hardware profiles (mutually exclusive)
 - `invokeai-nvidia`, `invokeai-amd`, `invokeai-cpu`: InvokeAI hardware profiles (mutually exclusive)
+- `comfyui-nvidia`, `comfyui-amd`, `comfyui-cpu`: ComfyUI hardware profiles (mutually exclusive; the pre-1.13 `comfyui` profile is migrated by the wizard). No `CLI_ARGS` in compose - the images ship the right default and the volume must be `/root`
 - `cloudflare-tunnel`: Cloudflare Tunnel for zero-trust access (see `cloudflare-instructions.md`)
 - `supabase`: Supabase BaaS (external compose, cloned at runtime; mutually exclusive with `dify`)
 - `dify`: Dify AI platform (external compose, cloned at runtime; mutually exclusive with `supabase`)
@@ -284,7 +287,7 @@ Common profiles:
 - `python-runner`: Internal Python execution environment (no external access)
 - `n8n-sandbox`: n8n Assistant code-execution sandbox (requires `n8n`; internal only, see below)
 - `open-terminal`: Open Terminal execution sandbox for Open WebUI agents (requires `open-webui`; internal only, see below)
-- `searxng`, `letta`, `lightrag`, `libretranslate`, `crawl4ai`, `docling`, `waha`, `comfyui`, `paddleocr`, `ragapp`, `gotenberg`, `postiz`, `n8n-mcp`: Additional optional services
+- `searxng`, `letta`, `lightrag`, `libretranslate`, `crawl4ai`, `docling`, `waha`, `paddleocr`, `ragapp`, `gotenberg`, `postiz`, `n8n-mcp`: Additional optional services
 
 ## Architecture Patterns
 
