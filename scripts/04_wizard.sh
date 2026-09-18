@@ -40,7 +40,7 @@ current_profiles_for_matching=",$CURRENT_PROFILES_VALUE,"
 base_services_data=(
     "appsmith" "Appsmith (Low-code Platform for Internal Tools & Dashboards)"
     "cloudflare-tunnel" "Cloudflare Tunnel (Zero-Trust Secure Access)"
-    "comfyui" "ComfyUI (Node-based Stable Diffusion UI)"
+    "comfyui" "ComfyUI (Node-based Stable Diffusion UI - select hardware in next step)"
     "crawl4ai" "Crawl4ai (Web Crawler for AI)"
     "databasus" "Databasus (Database backups & monitoring)"
     "dify" "Dify (AI Application Development Platform with LLMOps)"
@@ -98,6 +98,14 @@ while [ $idx -lt ${#base_services_data[@]} ]; do
                   "$current_profiles_for_matching" == *",invokeai-cpu,"* ]]; then
                 status="ON"
             fi
+        elif [[ "$tag" == "comfyui" ]]; then
+            # ",comfyui," is the pre-1.13 profile (CPU-only); still counts as selected
+            if [[ "$current_profiles_for_matching" == *",comfyui-nvidia,"* || \
+                  "$current_profiles_for_matching" == *",comfyui-amd,"* || \
+                  "$current_profiles_for_matching" == *",comfyui-cpu,"* || \
+                  "$current_profiles_for_matching" == *",comfyui,"* ]]; then
+                status="ON"
+            fi
         elif [[ "$current_profiles_for_matching" == *",$tag,"* ]]; then
             status="ON"
         fi
@@ -135,6 +143,7 @@ selected_profiles=()
 ollama_selected=0
 ollama_profile=""
 invokeai_selected=0
+comfyui_selected=0
 
 if [ -n "$CHOICES" ]; then
     # Parse whiptail output safely (without eval)
@@ -146,6 +155,8 @@ if [ -n "$CHOICES" ]; then
             ollama_selected=1
         elif [ "$choice" == "invokeai" ]; then
             invokeai_selected=1
+        elif [ "$choice" == "comfyui" ]; then
+            comfyui_selected=1
         else
             selected_profiles+=("$choice")
         fi
@@ -300,6 +311,51 @@ if [ $invokeai_selected -eq 1 ]; then
     fi
 fi
 
+# If ComfyUI was selected, prompt for the hardware profile
+if [ $comfyui_selected -eq 1 ]; then
+    default_comfyui_hardware="comfyui-nvidia" # Fallback default
+    comfyui_hw_on_nvidia="OFF"
+    comfyui_hw_on_amd="OFF"
+    comfyui_hw_on_cpu="OFF"
+
+    if [[ "$current_profiles_for_matching" == *",comfyui-nvidia,"* ]]; then
+        comfyui_hw_on_nvidia="ON"
+        default_comfyui_hardware="comfyui-nvidia"
+    elif [[ "$current_profiles_for_matching" == *",comfyui-amd,"* ]]; then
+        comfyui_hw_on_amd="ON"
+        default_comfyui_hardware="comfyui-amd"
+    elif [[ "$current_profiles_for_matching" == *",comfyui-cpu,"* || \
+            "$current_profiles_for_matching" == *",comfyui,"* ]]; then
+        # The pre-1.13 "comfyui" profile ran on the CPU: keep that as the default
+        # so an update never adds an NVIDIA reservation the host may not have.
+        comfyui_hw_on_cpu="ON"
+        default_comfyui_hardware="comfyui-cpu"
+    else
+        # Fresh selection: default to NVIDIA (image generation on CPU is very slow).
+        comfyui_hw_on_nvidia="ON"
+        default_comfyui_hardware="comfyui-nvidia"
+    fi
+
+    comfyui_hardware_options=(
+        "comfyui-nvidia" "NVIDIA GPU (Requires NVIDIA drivers & CUDA)" "$comfyui_hw_on_nvidia"
+        "comfyui-amd" "AMD GPU (Requires ROCm drivers)" "$comfyui_hw_on_amd"
+        "comfyui-cpu" "CPU (Very slow image generation, not recommended)" "$comfyui_hw_on_cpu"
+    )
+    CHOSEN_COMFYUI_PROFILE=$(wt_radiolist "ComfyUI Hardware Profile" \
+      "Choose the hardware profile for ComfyUI. This will be added to your Docker Compose profiles." \
+      "$default_comfyui_hardware" \
+      "${comfyui_hardware_options[@]}")
+
+    comfyui_exitstatus=$?
+    if [ $comfyui_exitstatus -eq 0 ] && [ -n "$CHOSEN_COMFYUI_PROFILE" ]; then
+        selected_profiles+=("$CHOSEN_COMFYUI_PROFILE")
+        log_info "ComfyUI hardware profile selected: $CHOSEN_COMFYUI_PROFILE"
+    else
+        log_warning "ComfyUI hardware profile selection cancelled. ComfyUI will not be installed."
+        comfyui_selected=0
+    fi
+fi
+
 # If Gost was selected, prompt for upstream proxy URL
 gost_selected=0
 for p in "${selected_profiles[@]}"; do
@@ -355,6 +411,8 @@ else
             fi
         elif [[ "$profile" == "invokeai-nvidia" || "$profile" == "invokeai-amd" || "$profile" == "invokeai-cpu" ]]; then
             echo -e "  ${GREEN}*${NC} InvokeAI ($profile profile)"
+        elif [[ "$profile" == "comfyui-nvidia" || "$profile" == "comfyui-amd" || "$profile" == "comfyui-cpu" ]]; then
+            echo -e "  ${GREEN}*${NC} ComfyUI ($profile profile)"
         else
             echo -e "  ${GREEN}*${NC} $profile"
         fi

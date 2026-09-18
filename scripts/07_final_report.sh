@@ -93,6 +93,10 @@ if is_profile_active "n8n-mcp"; then
     else
         echo -e "     ${GREEN}*${NC} ${WHITE}n8n-MCP${NC}: workflow-management tools enabled (N8N_API_KEY is set)"
     fi
+    if [ -z "${N8N_MCP_ACCESS_TOKEN:-}" ]; then
+        echo -e "       Optional: set N8N_MCP_ACCESS_TOKEN in .env (n8n Settings > Instance-level MCP > Connect > API key)"
+        echo -e "       to unlock agents, version history and dynamic node resources, then run 'make restart'"
+    fi
     echo -e "       Connect your IDE (token is on the Welcome Page):"
     echo -e "       ${CYAN}npx -y mcp-remote https://${N8N_MCP_HOSTNAME:-<N8N_MCP_HOSTNAME>}/mcp --header \"Authorization: Bearer <N8N_MCP_AUTH_TOKEN>\"${NC}"
 fi
@@ -175,6 +179,9 @@ if is_profile_active "open-terminal"; then
 fi
 if is_profile_active "crawl4ai"; then
     echo -e "     ${GREEN}*${NC} ${WHITE}Crawl4AI${NC}: Internal API at http://crawl4ai:11235 - requests must send 'Authorization: Bearer <token>' (token on Welcome Page)"
+fi
+if is_profile_active "comfyui-nvidia" || is_profile_active "comfyui-amd" || is_profile_active "comfyui-cpu"; then
+    echo -e "     ${GREEN}*${NC} ${WHITE}ComfyUI${NC}: Models and custom nodes persist in the comfyui_data volume; update ComfyUI itself through ComfyUI-Manager, not by pulling the image"
 fi
 if is_profile_active "invokeai-nvidia" || is_profile_active "invokeai-amd" || is_profile_active "invokeai-cpu"; then
     echo -e "     ${GREEN}*${NC} ${WHITE}InvokeAI${NC}: Open the Model Manager on first visit and download a starter model before generating images"

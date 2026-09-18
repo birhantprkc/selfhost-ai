@@ -273,7 +273,7 @@ if is_profile_active "letta"; then
 fi
 
 # ComfyUI
-if is_profile_active "comfyui"; then
+if is_profile_active "comfyui-nvidia" || is_profile_active "comfyui-amd" || is_profile_active "comfyui-cpu"; then
     SERVICES_ARRAY+=("    \"comfyui\": {
       \"hostname\": \"$(json_escape "$COMFYUI_HOSTNAME")\",
       \"credentials\": {
