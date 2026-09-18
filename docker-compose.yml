@@ -826,7 +826,7 @@ services:
       start_period: 1s
 
   minio:
-    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+    image: quay.io/minio/minio:latest
     container_name: minio
     restart: always
     profiles: ["langfuse"]
@@ -1464,7 +1464,7 @@ services:
       - ragflow_mysql_data:/var/lib/mysql
 
   ragflow-minio:
-    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+    image: quay.io/minio/minio:latest
     container_name: ragflow-minio
     profiles: ["ragflow"]
     restart: unless-stopped
