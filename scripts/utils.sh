@@ -918,9 +918,11 @@ cleanup_legacy_postgresus() {
 # Usage: cleanup_legacy_comfyui
 cleanup_legacy_comfyui() {
     local container_name="comfyui"
-    local service
-    service=$(docker inspect --format '{{ index .Config.Labels "com.docker.compose.service" }}' "$container_name" 2>/dev/null) || return 0
-    if [ "$service" = "comfyui" ]; then
+    local labels
+    # Both labels in one inspect: a "comfyui" container from another Compose
+    # project must not be touched, even though the name would collide anyway.
+    labels=$(docker inspect --format '{{ index .Config.Labels "com.docker.compose.project" }}/{{ index .Config.Labels "com.docker.compose.service" }}' "$container_name" 2>/dev/null) || return 0
+    if [ "$labels" = "localai/comfyui" ]; then
         log_info "Found pre-1.13 ComfyUI container, removing it so the hardware-specific service can take its place..."
         docker stop "$container_name" 2>/dev/null || true
         docker rm -f "$container_name" 2>/dev/null || true
