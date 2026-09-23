@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.15.1] - 2026-09-23
+
+### Fixed
+- **n8n workers** - Lowering `N8N_WORKER_COUNT` now removes the extra `n8n-worker-N` / `n8n-runner-N` containers on install, `make update` or `bash scripts/generate_n8n_workers.sh`; each is stopped gracefully first (up to 30s to finish running executions). Before, the regenerated compose file no longer listed them, so `down` left them running as orphans that kept processing queue jobs. `make doctor` warns about a worker above the configured count.
+
 ## [1.15.0] - 2026-09-23
 
 ### Added

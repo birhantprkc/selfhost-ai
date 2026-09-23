@@ -167,7 +167,7 @@ This project uses [Semantic Versioning](https://semver.org/). When updating `CHA
   - Runner connects to its worker via `network_mode: "service:n8n-worker-N"` (localhost:5679)
   - Runner image `n8nio/runners` must match n8n version
 - **Template profile pattern**: `docker-compose.yml` defines `n8n-worker-template` and `n8n-runner-template` with `profiles: ["n8n-template"]` (never activated directly). `generate_n8n_workers.sh` uses these as templates to generate `docker-compose.n8n-workers.yml` with the actual worker/runner services.
-- **Scaling**: Change `N8N_WORKER_COUNT` in `.env` and run `bash scripts/generate_n8n_workers.sh`
+- **Scaling**: Change `N8N_WORKER_COUNT` in `.env` and run `bash scripts/generate_n8n_workers.sh`. The generator also removes worker/runner containers above the count (`cleanup_stale_n8n_workers` in utils.sh): the rewritten compose file no longer lists them, so `down` would leave them running as orphans that keep taking queue jobs
 - **Code node libraries**: Configured via `n8n/n8n-task-runners.json` and `n8n/Dockerfile.runner`:
   - **JavaScript runner**: packages installed via `pnpm add` in Dockerfile.runner; allowlist in `n8n-task-runners.json` (`NODE_FUNCTION_ALLOW_EXTERNAL`, `NODE_FUNCTION_ALLOW_BUILTIN`); default packages: `cheerio`, `axios`, `moment`, `lodash`
   - **Python runner**: also configured in `n8n-task-runners.json`; uses `/opt/runners/task-runner-python/.venv/bin/python` with `N8N_RUNNERS_STDLIB_ALLOW: "*"` and `N8N_RUNNERS_EXTERNAL_ALLOW: "*"`

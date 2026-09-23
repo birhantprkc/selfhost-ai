@@ -426,6 +426,16 @@ check_service "caddy" "80"
 
 if is_profile_active "n8n"; then
     check_service "n8n" "5678"
+    # A running worker above N8N_WORKER_COUNT still takes queue jobs. Either the
+    # compose file is stale ('make restart' does not regenerate it after a .env
+    # change) or the worker is an orphan the generator's cleanup could not remove.
+    if [[ "${N8N_WORKER_COUNT:-1}" =~ ^[1-9][0-9]*$ ]]; then
+        for name in $(docker ps --filter "label=com.docker.compose.project=localai" --format '{{.Names}}' 2>/dev/null | grep -E '^n8n-worker-[0-9]+$'); do
+            if [ "${name##*-}" -gt "${N8N_WORKER_COUNT:-1}" ]; then
+                count_warning "$name is running but N8N_WORKER_COUNT=${N8N_WORKER_COUNT:-1} - it still processes queue jobs. Run 'bash scripts/generate_n8n_workers.sh'."
+            fi
+        done
+    fi
 fi
 
 # Extra Ollama instances. Not via check_service: that helper assumes the
