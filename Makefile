@@ -24,7 +24,7 @@ help:
 	@echo "  make import            Import n8n workflows from backup"
 	@echo "  make import n=10       Import first N workflows only"
 	@echo "  make setup-tls         Configure custom TLS certificates"
-	@echo "  make openclaw a=\"...\"  Run an OpenClaw CLI command (e.g. a=\"devices list\")"
+	@echo "  make openclaw a=\"...\"  Run an OpenClaw CLI command (e.g. a=\"pairing list telegram\")"
 	@echo ""
 	@echo "  make switch-beta       Switch to beta (develop branch)"
 	@echo "  make switch-stable     Switch to stable (main branch)"

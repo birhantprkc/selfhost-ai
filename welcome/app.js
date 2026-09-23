@@ -683,8 +683,7 @@
         database: { label: 'Database', isSecret: false },
         proxy_url: { label: 'Proxy URL', isSecret: true },
         upstream_proxy: { label: 'Upstream', isSecret: true },
-        runtime: { label: 'Runtime', isSecret: false },
-        gateway_password: { label: 'Gateway Password', isSecret: true }
+        runtime: { label: 'Runtime', isSecret: false }
     };
 
     /**

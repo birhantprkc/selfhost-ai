@@ -43,6 +43,15 @@ volumes:
   uptime_kuma_data:
   weaviate_data:
 
+# Private link between Caddy and the OpenClaw gateway. Only caddy, openclaw and
+# openclaw-init join it: OpenClaw trusts the identity header only from this
+# subnet (openclaw/init.sh), so containers on the default network cannot
+# impersonate the user. The host holds the subnet's gateway address and is
+# trusted too, so any host process could - accepted for single-admin servers,
+# see openclaw/init.sh.
+networks:
+  openclaw-proxy:
+
 # Shared logging configuration for services
 x-logging: &default-logging
   driver: "json-file"
@@ -316,18 +325,18 @@ services:
 
   # ---------------------------------------------------------------------------
   # OpenClaw (profile "openclaw") - personal AI agent with the Control UI and a
-  # Telegram bot. The dashboard sits behind Caddy basic auth plus the gateway
-  # password (gateway.auth.mode=password); every new browser is additionally
-  # approved once with 'make openclaw a="devices approve <id>"'. Device pairing
-  # cannot be turned off: dangerouslyDisableDeviceAuth is retired and inert, and
-  # allowInsecureAuth is no longer in the strict schema (it would stop the
-  # gateway). openclaw-init (see openclaw/init.sh) copies the SSH key and
-  # enforces the gateway keys on every 'compose up'.
+  # Telegram bot. The dashboard sits behind Caddy basic auth only: the gateway runs in
+  # trusted-proxy mode, Caddy passes the basic-auth user in X-Forwarded-User over
+  # the private openclaw-proxy network, and browsers are auto-approved, so there
+  # is no second password and no device pairing screen. openclaw-init (see
+  # openclaw/init.sh) copies the SSH key and enforces the gateway keys on every
+  # 'compose up'. OPENCLAW_GATEWAY_PASSWORD is only for the local CLI
+  # ('make openclaw a="..."') and init.sh's password-login fallback.
   # FULL HOST ACCESS BY DESIGN: docker.sock (root-equivalent) plus an SSH key
   # that 05_configure_services.sh authorizes for the installing user
-  # ('ssh host' inside the container). Anyone approved in Telegram or the
-  # dashboard controls the server; keep the Telegram DM policy on pairing or an
-  # allowlist.
+  # ('ssh host' inside the container). Anyone who passes the OpenClaw basic
+  # auth or is approved in Telegram controls the server; keep the Telegram DM
+  # policy on pairing or an allowlist.
   # ---------------------------------------------------------------------------
   openclaw-init:
     build: &openclaw-build
@@ -342,13 +351,22 @@ services:
     logging: *default-logging
     user: "0:0"
     entrypoint: ["sh", "/openclaw-init.sh"]
-    # Password and hostname as for the gateway: 'config set' validates the whole
-    # config, including the ${OPENCLAW_HOSTNAME} reference and password auth.
+    # Same values as the gateway: 'config set' validates the whole config,
+    # including the ${OPENCLAW_HOSTNAME} / ${OPENCLAW_USERNAME} references and,
+    # on the password-login fallback, the gateway password.
     # TELEGRAM_BOT_TOKEN decides whether init.sh switches the channel on.
     environment:
       OPENCLAW_GATEWAY_PASSWORD: "${OPENCLAW_GATEWAY_PASSWORD}"
       OPENCLAW_HOSTNAME: "${OPENCLAW_HOSTNAME:-openclaw.localhost}"
+      OPENCLAW_USERNAME: "${OPENCLAW_USERNAME}"
       TELEGRAM_BOT_TOKEN: "${OPENCLAW_TELEGRAM_BOT_TOKEN:-}"
+      # Marks this container as attached to openclaw-proxy only; init.sh refuses
+      # to trust its own subnet without it (a stale pre-1.14.1 container).
+      OPENCLAW_INIT_PROXY_NETWORK: "true"
+    # Only the proxy network: init.sh reads that network's subnet from its own
+    # interface and makes it the gateway's only trusted proxy range.
+    networks:
+      - openclaw-proxy
     volumes:
       - ./openclaw/init.sh:/openclaw-init.sh:ro
       - ./openclaw/ssh:/ssh-src:ro
@@ -368,8 +386,16 @@ services:
       <<: *proxy-env
       OPENCLAW_GATEWAY_PASSWORD: "${OPENCLAW_GATEWAY_PASSWORD}"
       OPENCLAW_HOSTNAME: "${OPENCLAW_HOSTNAME:-openclaw.localhost}"
+      OPENCLAW_USERNAME: "${OPENCLAW_USERNAME}"
       TELEGRAM_BOT_TOKEN: "${OPENCLAW_TELEGRAM_BOT_TOKEN:-}"
       TZ: "${GENERIC_TIMEZONE:-UTC}"
+    # Caddy reaches the gateway as openclaw-gateway, an alias that exists only on
+    # openclaw-proxy, so its requests always come from the trusted subnet.
+    networks:
+      default:
+      openclaw-proxy:
+        aliases:
+          - openclaw-gateway
     # GID of /var/run/docker.sock, written by 05_configure_services.sh
     group_add:
       - "${OPENCLAW_DOCKER_GID}"
@@ -693,6 +719,9 @@ services:
   caddy:
     container_name: caddy
     image: docker.io/library/caddy:2-alpine
+    networks:
+      - default
+      - openclaw-proxy
     ports:
       - "80:80"
       - "443:443"

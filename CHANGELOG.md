@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.14.1] - 2026-09-23
+
+### Changed
+- **OpenClaw** - The dashboard opens right after the Caddy basic-auth login: no second (gateway) password and no browser approval with `make openclaw a="devices approve ..."` any more. The gateway now runs in OpenClaw's trusted-proxy mode. Caddy passes the authenticated user in `X-Forwarded-User` over a new private `openclaw-proxy` Docker network that only Caddy and OpenClaw join. `openclaw-init` sets `gateway.trustedProxies` to exactly that network's subnet, so containers on the stack's default network cannot forge the header; any process on the host itself (the subnet's gateway address) is trusted too, so do not enable the profile on a server shared with untrusted local users. If the subnet cannot be determined, the trusted-proxy settings are rejected or a stale pre-1.14.1 `openclaw-init` container is reused, `openclaw-init` tries to fall back to the previous password login with no trusted proxy; `make doctor`, `make restart` and the final report of install / `make update` show it. Only `OPENCLAW_USERNAME` is accepted, and new browsers are auto-approved with admin scope. The basic-auth password is now the only key to the agent, and through it to the server. `OPENCLAW_GATEWAY_PASSWORD` remains for the local CLI (`make openclaw a="..."`) and the password-login fallback, and is no longer shown on the Welcome Page. **Upgrading**: `make update` or `make restart` recreate the containers, which attaches Caddy to the new network (with `make start` the dashboard returns 502 until `make restart`); no browser needs approving again.
+
 ## [1.14.0] - 2026-09-23
 
 ### Added
