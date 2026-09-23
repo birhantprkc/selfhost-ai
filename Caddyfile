@@ -47,6 +47,16 @@ import /etc/caddy/addons/tls-snippet.conf
     reverse_proxy open-webui:8080
 }
 
+# OpenClaw (basic auth in front of the gateway password; the WebSocket to the
+# gateway goes through the same basic auth)
+{$OPENCLAW_HOSTNAME} {
+    import service_tls
+    basic_auth {
+        {$OPENCLAW_USERNAME} {$OPENCLAW_PASSWORD_HASH}
+    }
+    reverse_proxy openclaw:18789
+}
+
 # Ollama API (Bearer token protected — for external/programmatic access)
 # Served whenever OLLAMA_HOSTNAME resolves to this server — note a wildcard
 # *.domain DNS record exposes it automatically. Every request must send

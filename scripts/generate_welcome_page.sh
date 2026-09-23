@@ -427,6 +427,22 @@ if is_profile_active "open-terminal"; then
     }")
 fi
 
+# OpenClaw (basic auth, then the gateway password inside the dashboard)
+if is_profile_active "openclaw"; then
+    SERVICES_ARRAY+=("    \"openclaw\": {
+      \"hostname\": \"$(json_escape "$OPENCLAW_HOSTNAME")\",
+      \"credentials\": {
+        \"username\": \"$(json_escape "$OPENCLAW_USERNAME")\",
+        \"password\": \"$(json_escape "$OPENCLAW_PASSWORD")\"
+      },
+      \"extra\": {
+        \"gateway_password\": \"$(json_escape "$OPENCLAW_GATEWAY_PASSWORD")\",
+        \"recommendation\": \"Enter the Gateway password in the dashboard, then approve the browser on the server: make openclaw a=\\\"devices list\\\", then a=\\\"devices approve <requestId>\\\". Telegram senders: make openclaw a=\\\"pairing approve telegram <CODE>\\\". Full server access via 'ssh host' and Docker.\",
+        \"docs\": \"https://docs.openclaw.ai\"
+      }
+    }")
+fi
+
 # Crawl4AI (internal only)
 if is_profile_active "crawl4ai"; then
     SERVICES_ARRAY+=("    \"crawl4ai\": {
@@ -611,6 +627,16 @@ if is_profile_active "n8n-mcp" && [ -z "${N8N_API_KEY:-}" ]; then
       \"step\": $STEP_NUM,
       \"title\": \"Unlock n8n-MCP workflow tools\",
       \"description\": \"Create an API key in n8n (Settings > n8n API), set N8N_API_KEY in .env, then run 'make restart'\"
+    }")
+    ((STEP_NUM++))
+fi
+
+# OpenClaw needs a model before it can answer (dashboard or Telegram)
+if is_profile_active "openclaw"; then
+    QUICK_START_ARRAY+=("    {
+      \"step\": $STEP_NUM,
+      \"title\": \"Set up OpenClaw\",
+      \"description\": \"Log in, approve the browser with 'make openclaw a=\\\"devices approve <requestId>\\\"', then pick an LLM provider and model in the dashboard\"
     }")
     ((STEP_NUM++))
 fi

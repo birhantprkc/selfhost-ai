@@ -54,6 +54,7 @@ EMAIL_VARS=(
     "LETSENCRYPT_EMAIL"
     "LIGHTRAG_USERNAME"
     "LT_USERNAME"
+    "OPENCLAW_USERNAME"
     "PADDLEOCR_USERNAME"
     "PROMETHEUS_USERNAME"
     "RAGAPP_USERNAME"
@@ -115,6 +116,8 @@ declare -A VARS_TO_GENERATE=(
     ["NEXTAUTH_SECRET"]="secret:64" # base64 encoded, 48 bytes -> 64 chars
     ["NOCODB_JWT_SECRET"]="secret:64" # NocoDB authentication JWT secret
     ["OLLAMA_CADDY_API_TOKEN"]="secret:48" # Bearer token for exposing Ollama API via Caddy
+    ["OPENCLAW_GATEWAY_PASSWORD"]="password:32" # OpenClaw gateway.auth password (typed into the dashboard; 'openclaw security audit' warns under 24 chars)
+    ["OPENCLAW_PASSWORD"]="password:32" # OpenClaw Caddy basic auth password
     ["OPEN_TERMINAL_API_KEY"]="hex:48" # Open WebUI -> open-terminal bearer key (entered in Admin Settings)
     ["PADDLEOCR_PASSWORD"]="password:32" # Added PaddleOCR basic auth password
     ["PG_META_CRYPTO_KEY"]="alphanum:32"
@@ -642,7 +645,7 @@ if [[ -n "$template_no_proxy" ]]; then
 fi
 
 # Hash passwords using caddy with bcrypt (consolidated loop)
-SERVICES_NEEDING_HASH=("PROMETHEUS" "SEARXNG" "COMFYUI" "PADDLEOCR" "RAGAPP" "LT" "DOCLING" "TEMPORAL_UI" "WELCOME" "INVOKEAI")
+SERVICES_NEEDING_HASH=("PROMETHEUS" "SEARXNG" "COMFYUI" "PADDLEOCR" "RAGAPP" "LT" "DOCLING" "TEMPORAL_UI" "WELCOME" "INVOKEAI" "OPENCLAW")
 
 for service in "${SERVICES_NEEDING_HASH[@]}"; do
     password_var="${service}_PASSWORD"

@@ -98,6 +98,8 @@ The installer also makes the following powerful open-source tools **available fo
 
 ✅ [**Open WebUI**](https://openwebui.com/) - A user-friendly, ChatGPT-like interface to interact privately with your AI models and n8n agents.
 
+✅ [**OpenClaw**](https://docs.openclaw.ai) - Personal AI agent with a web dashboard and a Telegram bot, with full access to the server over SSH and to Docker (see [below](#openclaw-ai-agent-with-telegram-and-server-access)).
+
 ✅ [**Open Terminal**](https://docs.openwebui.com/features/open-terminal/) - Execution sandbox for Open WebUI agents: a real Linux shell with a filesystem, package installs, local services and Jupyter, a separate Linux account per user (internal only, see [below](#open-terminal-execution-sandbox-for-open-webui-agents)).
 
 ✅ [**PaddleOCR**](https://www.paddleocr.ai/latest/en/index.html) - A CPU-ready OCR API powered by PaddleX Basic Serving. 
@@ -208,6 +210,7 @@ After successful installation, your services are up and running! Here's how to g
     - **NocoDB:** `nocodb.yourdomain.com`
     - **Ollama:** `ollama.yourdomain.com` (Optional local-LLM API; every request must send `Authorization: Bearer <OLLAMA_CADDY_API_TOKEN>`. A leaked token grants full control — including pulling/deleting models — not just inference.)
     - **Open WebUI:** `webui.yourdomain.com`
+    - **OpenClaw:** `openclaw.yourdomain.com` (Caddy basic auth, then the Gateway password; approve each new browser once)
     - **PaddleOCR:** `paddleocr.yourdomain.com`
     - **Portainer:** `portainer.yourdomain.com` (Protected by Caddy basic auth; on first login, complete Portainer admin setup)
     - **Postiz:** `postiz.yourdomain.com`
@@ -238,6 +241,15 @@ Open WebUI can search, read and reason, and its built-in code interpreter runs a
 - **Size and limits**: the full image (`latest`, or a release tag such as `0.12.5` via `OPEN_TERMINAL_VERSION`) is about 4 GB and is the only variant that supports multi-user and runtime installs; the installer refuses a `slim`/`alpine`/`openshift` variant while multi-user is on. The container is capped at `OPEN_TERMINAL_CPU_LIMIT=2.0` CPUs and `OPEN_TERMINAL_MEMORY_LIMIT=2G`; raise them in `.env` if the agent needs more.
 - **Preinstalled packages**: `OPEN_TERMINAL_PACKAGES`, `OPEN_TERMINAL_PIP_PACKAGES` and `OPEN_TERMINAL_NPM_PACKAGES` are reinstalled on every container start, so long lists slow startup. In multi-user mode they are the only way to add apt packages, because per-user accounts have no `sudo`; the agent can still `pip install --user` and use project-local npm. With multi-user off the shell has `sudo` and installs anything itself.
 - **Egress filtering** (`OPEN_TERMINAL_ALLOWED_DOMAINS`) is not wired into the stack: the image treats an empty value as "block all outbound traffic" and needs `NET_ADMIN`. If you want it, add the variable together with `cap_add: [NET_ADMIN]` to the `open-terminal` service in `docker-compose.override.yml`.
+
+### OpenClaw: AI agent with Telegram and server access
+
+[OpenClaw](https://docs.openclaw.ai) is a personal AI agent with a web dashboard and chat channels. Select **OpenClaw** in the wizard (`openclaw` profile). The installer asks for a Telegram bot token from [@BotFather](https://t.me/BotFather), which you can leave empty and set later as `OPENCLAW_TELEGRAM_BOT_TOKEN`.
+
+- **Login**: open `openclaw.yourdomain.com`, pass the Caddy basic auth and enter the Gateway password. All credentials are on the Welcome Page. OpenClaw asks you to approve every new browser once; run `make openclaw a="devices list"`, then `make openclaw a="devices approve <requestId>"`.
+- **Model**: choose the LLM provider and model in the dashboard. Until you do, the agent cannot answer.
+- **Telegram**: the bot uses long polling, so it needs no public URL. A new sender gets a pairing code, which you approve with `make openclaw a="pairing approve telegram <CODE>"` or in the dashboard. You can switch to an allowlist of Telegram user IDs in the dashboard.
+- **Full server access, by design**: the container mounts the Docker socket and gets an SSH key authorized for the installing user. From the container, `ssh host` opens a shell on the server and `docker` controls every container. Anyone who can talk to the agent in the dashboard or Telegram controls the server, so approve senders carefully. `ssh host` needs the server's sshd to accept connections from the Docker bridge (the default `0.0.0.0:22`). The key is removed from `authorized_keys` the next time the installer or `make update` runs with the profile off (including the run where you deselect it); `make restart` alone does not remove it, and the key files stay in `openclaw/ssh/`.
 
 2.  **Explore n8n:**
 

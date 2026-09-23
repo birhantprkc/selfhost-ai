@@ -1,4 +1,4 @@
-.PHONY: help install update update-preview git-pull clean clean-all logs status monitor restart stop start show-restarts doctor switch-beta switch-stable import setup-tls
+.PHONY: help install update update-preview git-pull clean clean-all logs status monitor restart stop start show-restarts doctor switch-beta switch-stable import setup-tls openclaw
 
 PROJECT_NAME := localai
 
@@ -24,6 +24,7 @@ help:
 	@echo "  make import            Import n8n workflows from backup"
 	@echo "  make import n=10       Import first N workflows only"
 	@echo "  make setup-tls         Configure custom TLS certificates"
+	@echo "  make openclaw a=\"...\"  Run an OpenClaw CLI command (e.g. a=\"devices list\")"
 	@echo ""
 	@echo "  make switch-beta       Switch to beta (develop branch)"
 	@echo "  make switch-stable     Switch to stable (main branch)"
@@ -100,3 +101,6 @@ endif
 
 setup-tls:
 	bash ./scripts/setup_custom_tls.sh
+
+openclaw:
+	docker exec -it openclaw node dist/index.js $(a)
