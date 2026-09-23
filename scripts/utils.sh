@@ -937,11 +937,14 @@ cleanup_stale_n8n_workers() {
             # SIGTERM first, like 'down': a worker finishes its running executions
             # (n8n's default graceful shutdown is 30s); a plain 'rm -f' kills them
             # mid-step and the queue may run them again.
-            docker stop -t 30 "$name" >/dev/null 2>&1 || true
-            if docker rm -f "$name" >/dev/null 2>&1; then
+            # If the stop fails, leave it running rather than SIGKILL it with 'rm -f'
+            if ! docker stop -t 30 "$name" >/dev/null 2>&1; then
+                log_error "Failed to stop stale n8n container '$name'; left running so its executions are not killed. Remove it manually: docker stop -t 30 $name && docker rm $name"
+                failed=$((failed + 1))
+            elif docker rm "$name" >/dev/null 2>&1; then
                 removed=$((removed + 1))
             else
-                log_error "Failed to remove stale n8n container '$name'. It may still be processing queue jobs. Remove it manually: docker rm -f $name"
+                log_error "Stopped stale n8n container '$name' but could not remove it. Remove it manually: docker rm $name"
                 failed=$((failed + 1))
             fi
         fi
