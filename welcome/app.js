@@ -196,6 +196,14 @@
             category: 'ai',
             docsUrl: 'https://docs.openwebui.com/features/open-terminal/'
         },
+        'openclaw': {
+            name: 'OpenClaw',
+            description: 'Personal AI agent with Telegram bot',
+            icon: 'OC',
+            color: 'bg-[#E4572E]',
+            category: 'ai',
+            docsUrl: 'https://docs.openclaw.ai'
+        },
         'open-webui': {
             name: 'Open WebUI',
             description: 'ChatGPT-like Interface',
@@ -675,7 +683,8 @@
         database: { label: 'Database', isSecret: false },
         proxy_url: { label: 'Proxy URL', isSecret: true },
         upstream_proxy: { label: 'Upstream', isSecret: true },
-        runtime: { label: 'Runtime', isSecret: false }
+        runtime: { label: 'Runtime', isSecret: false },
+        gateway_password: { label: 'Gateway Password', isSecret: true }
     };
 
     /**

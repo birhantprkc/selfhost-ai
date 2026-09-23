@@ -91,6 +91,7 @@ make doctor            # Run system diagnostics (DNS, SSL, containers, disk, mem
 make import            # Import n8n workflows from backup
 make import n=10       # Import first N workflows only
 make setup-tls         # Configure custom TLS certificates
+make openclaw a="..."  # Run an OpenClaw CLI command (e.g. a="devices approve <id>")
 
 make switch-beta       # Switch to develop branch and update
 make switch-stable     # Switch to main branch and update
@@ -204,6 +205,14 @@ This project uses [Semantic Versioning](https://semver.org/). When updating `CHA
 - Never mount `docker.sock`: the entrypoint auto-joins the socket's group and the agent's shell would control the host daemon. The server process runs as `user` with passwordless sudo, so no `cap_drop` (apt, useradd and sudo need CHOWN/SETUID/SETGID/DAC_OVERRIDE). Provisioned per-user accounts are plain `useradd` users **without sudo**; only `OPEN_TERMINAL_MULTI_USER=false` gives the chat the sudo-capable shell, and only then are the startup package lists optional. The boundary is the network and the Open WebUI access grants. Healthcheck uses `curl` against the unauthenticated `/docs`.
 - `05_configure_services.sh` refuses a `slim`/`alpine`/`openshift` variant tag (bare or `-suffixed`) while `OPEN_TERMINAL_MULTI_USER=true`: those entrypoints ignore the multi-user and package variables, so every user would silently share one shell.
 
+### OpenClaw (`openclaw` profile)
+
+- Image built from `openclaw/Dockerfile` (`ghcr.io/openclaw/openclaw:${OPENCLAW_VERSION}` plus the static Docker CLI; the base image currently ships `openssh-client`, which `ssh host` depends on). Runs as `node` (uid 1000), state in the `openclaw_data` volume on `/home/node/.openclaw`, gateway and Control UI on `openclaw:18789`.
+- Dashboard login is two layers: Caddy basic auth (`OPENCLAW_USERNAME` / `OPENCLAW_PASSWORD`), then `gateway.auth.mode=password` with `OPENCLAW_GATEWAY_PASSWORD`, passed only as env (the env var is a fallback: a `gateway.auth.password` set in openclaw.json would win and the Welcome Page value would stop working, so init.sh never writes it). OpenClaw always requires one-time device approval for browsers behind a proxy (`make openclaw a="devices approve <id>"`). Do not try to bypass it: `dangerouslyDisableDeviceAuth` is retired and inert, and `allowInsecureAuth` is no longer in the strict schema, so it would stop the gateway.
+- `openclaw-init` (one-shot, same image, runs as root, `openclaw/init.sh`) runs on every `docker compose up`, not when Docker restarts the gateway on its own. It copies `openclaw/ssh/` into the `openclaw_ssh` volume owned by node, then as node runs `config set --batch-json` to enforce only `gateway.mode`, `gateway.bind`, `gateway.auth.mode`, `gateway.controlUi.allowedOrigins` (`https://${OPENCLAW_HOSTNAME}`, written literally and substituted by OpenClaw) and `gateway.trustedProxies`. The trusted proxies are all RFC1918 ranges, so any container on the Docker network may set forwarded headers. It sets `channels.telegram.enabled=true` only while the `.env` token is set and never forces it off. A failed `config set` prints `openclaw-init: ERROR` but exits 0, so an upstream schema change cannot abort `compose up` for the whole stack; `make doctor` greps the last run's log (`--since` its StartedAt) for that line. Everything else belongs to the user in the dashboard; check the upstream schema before adding keys.
+- Telegram: `TELEGRAM_BOT_TOKEN` env fallback from `OPENCLAW_TELEGRAM_BOT_TOKEN`, long polling, default `dmPolicy: pairing`.
+- Full host access by design: `/var/run/docker.sock` with `group_add: OPENCLAW_DOCKER_GID` (05 writes it from `stat -c %g /var/run/docker.sock`; `group_add` has no compose default for it). `05_configure_services.sh` (root required) generates `openclaw/ssh/` (gitignored, owned by root or the installing user). Only the root `openclaw-init` bind-mounts it (read-only); the gateway gets a node-owned copy in the `openclaw_ssh` volume, because a gateway bind mount would need uid 1000 ownership on the host, which `08_fix_permissions.sh` would undo. 05 writes an `ssh host` config pointing at `host.docker.internal` with the port from `sshd -T` as the real user and authorizes the key in that user's `authorized_keys` with the `openclaw@selfhost-ai` marker (derived from the private key with `ssh-keygen -y`, so no `.pub` file is trusted). The marker line is re-added on every run after making sure the file ends with a newline, removed from the previous account when the detected user changes (`OPENCLAW_SSH_USER`), and removed by the next install / `make update` with the profile off.
+
 ### Monitoring (Prometheus + Grafana)
 
 - n8n metrics are enabled in the `x-n8n` anchor: `N8N_METRICS` plus `N8N_METRICS_INCLUDE_MESSAGE_EVENT_BUS_METRICS` / `_WORKFLOW_ID_LABEL` / `_WORKFLOW_NAME_LABEL` / `_WORKFLOW_INFO`. They expose `n8n_workflow_{started,success,failed,cancelled}_total{workflow_id,workflow_name}` and the `n8n_workflow_info` / `n8n_active_workflow_info` id-to-name gauges (leader main only). The alerts and recording rules also use `n8n_workflow_execution_duration_seconds{status,mode,workflow_id}`, which is on by default (`N8N_METRICS_INCLUDE_WORKFLOW_EXECUTION_DURATION`); turning it off silently disables them. Setting `N8N_METRICS_PREFIX` would break every panel and alert
@@ -286,6 +295,7 @@ Common profiles:
 - `gost`: HTTP/HTTPS proxy for routing AI service outbound traffic
 - `python-runner`: Internal Python execution environment (no external access)
 - `n8n-sandbox`: n8n Assistant code-execution sandbox (requires `n8n`; internal only, see below)
+- `openclaw`: OpenClaw AI agent with dashboard and Telegram bot; full host access (see below)
 - `open-terminal`: Open Terminal execution sandbox for Open WebUI agents (requires `open-webui`; internal only, see below)
 - `searxng`, `letta`, `lightrag`, `libretranslate`, `crawl4ai`, `docling`, `waha`, `paddleocr`, `ragapp`, `gotenberg`, `postiz`, `n8n-mcp`: Additional optional services
 
@@ -439,6 +449,7 @@ bash -n scripts/doctor.sh
 bash -n scripts/setup_custom_tls.sh
 bash -n scripts/setup_sysbox.sh
 bash -n scripts/docker_cleanup.sh
+sh -n openclaw/init.sh
 ```
 
 ### Full Testing

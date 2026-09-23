@@ -23,6 +23,8 @@ volumes:
   ollama_storage:
   open-webui:
   open_terminal_home:
+  openclaw_data:
+  openclaw_ssh:
   paddle_cache:
   paddleocr_cache:
   paddlex_data:
@@ -311,6 +313,81 @@ services:
       timeout: 10s
       retries: 5
       start_period: 120s
+
+  # ---------------------------------------------------------------------------
+  # OpenClaw (profile "openclaw") - personal AI agent with the Control UI and a
+  # Telegram bot. The dashboard sits behind Caddy basic auth plus the gateway
+  # password (gateway.auth.mode=password); every new browser is additionally
+  # approved once with 'make openclaw a="devices approve <id>"'. Device pairing
+  # cannot be turned off: dangerouslyDisableDeviceAuth is retired and inert, and
+  # allowInsecureAuth is no longer in the strict schema (it would stop the
+  # gateway). openclaw-init (see openclaw/init.sh) copies the SSH key and
+  # enforces the gateway keys on every 'compose up'.
+  # FULL HOST ACCESS BY DESIGN: docker.sock (root-equivalent) plus an SSH key
+  # that 05_configure_services.sh authorizes for the installing user
+  # ('ssh host' inside the container). Anyone approved in Telegram or the
+  # dashboard controls the server; keep the Telegram DM policy on pairing or an
+  # allowlist.
+  # ---------------------------------------------------------------------------
+  openclaw-init:
+    build: &openclaw-build
+      context: ./openclaw
+      pull: true
+      args:
+        OPENCLAW_VERSION: "${OPENCLAW_VERSION:-latest}"
+    image: localai-openclaw
+    container_name: openclaw-init
+    profiles: ["openclaw"]
+    restart: "no"
+    logging: *default-logging
+    user: "0:0"
+    entrypoint: ["sh", "/openclaw-init.sh"]
+    # Password and hostname as for the gateway: 'config set' validates the whole
+    # config, including the ${OPENCLAW_HOSTNAME} reference and password auth.
+    # TELEGRAM_BOT_TOKEN decides whether init.sh switches the channel on.
+    environment:
+      OPENCLAW_GATEWAY_PASSWORD: "${OPENCLAW_GATEWAY_PASSWORD}"
+      OPENCLAW_HOSTNAME: "${OPENCLAW_HOSTNAME:-openclaw.localhost}"
+      TELEGRAM_BOT_TOKEN: "${OPENCLAW_TELEGRAM_BOT_TOKEN:-}"
+    volumes:
+      - ./openclaw/init.sh:/openclaw-init.sh:ro
+      - ./openclaw/ssh:/ssh-src:ro
+      - openclaw_data:/home/node/.openclaw
+      - openclaw_ssh:/home/node/.ssh
+
+  openclaw:
+    build: *openclaw-build
+    image: localai-openclaw
+    container_name: openclaw
+    profiles: ["openclaw"]
+    restart: unless-stopped
+    logging: *default-logging
+    init: true
+    command: ["node", "dist/index.js", "gateway", "--bind", "lan", "--port", "18789"]
+    environment:
+      <<: *proxy-env
+      OPENCLAW_GATEWAY_PASSWORD: "${OPENCLAW_GATEWAY_PASSWORD}"
+      OPENCLAW_HOSTNAME: "${OPENCLAW_HOSTNAME:-openclaw.localhost}"
+      TELEGRAM_BOT_TOKEN: "${OPENCLAW_TELEGRAM_BOT_TOKEN:-}"
+      TZ: "${GENERIC_TIMEZONE:-UTC}"
+    # GID of /var/run/docker.sock, written by 05_configure_services.sh
+    group_add:
+      - "${OPENCLAW_DOCKER_GID}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - openclaw_data:/home/node/.openclaw
+      - openclaw_ssh:/home/node/.ssh:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD-SHELL", "http_proxy= https_proxy= HTTP_PROXY= HTTPS_PROXY= node dist/docker-healthcheck.js || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    depends_on:
+      openclaw-init:
+        condition: service_completed_successfully
 
   n8n-import:
     <<: *service-n8n
@@ -663,6 +740,10 @@ services:
       NOCODB_HOSTNAME: "${NOCODB_HOSTNAME}"
       OLLAMA_HOSTNAME: "${OLLAMA_HOSTNAME}"
       OLLAMA_CADDY_API_TOKEN: "${OLLAMA_CADDY_API_TOKEN}"
+      # Defaulted for the same reason as N8N_MCP_HOSTNAME above.
+      OPENCLAW_HOSTNAME: "${OPENCLAW_HOSTNAME:-openclaw.localhost}"
+      OPENCLAW_PASSWORD_HASH: "${OPENCLAW_PASSWORD_HASH}"
+      OPENCLAW_USERNAME: "${OPENCLAW_USERNAME}"
       PADDLEOCR_HOSTNAME: "${PADDLEOCR_HOSTNAME}"
       PADDLEOCR_PASSWORD_HASH: "${PADDLEOCR_PASSWORD_HASH}"
       PADDLEOCR_USERNAME: "${PADDLEOCR_USERNAME}"

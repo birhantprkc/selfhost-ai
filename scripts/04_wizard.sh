@@ -62,6 +62,7 @@ base_services_data=(
     "ollama" "Ollama (Local LLM Runner - select hardware in next step)"
     "open-terminal" "Open Terminal (execution sandbox for Open WebUI agents; multi-user, ~4 GB image)"
     "open-webui" "Open WebUI (ChatGPT-like Interface)"
+    "openclaw" "OpenClaw (AI agent + Telegram bot; FULL server & Docker access)"
     "paddleocr" "PaddleOCR (OCR API Server)"
     "portainer" "Portainer (Docker management UI)"
     "postiz" "Postiz (Social publishing platform)"
