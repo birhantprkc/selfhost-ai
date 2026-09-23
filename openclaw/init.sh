@@ -23,6 +23,9 @@
 # A failed subnet lookup or 'config set' is reported but does not fail this
 # container: that would abort 'docker compose up' for the whole stack. 'make
 # doctor' and the final report show it (openclaw_init_failed in utils.sh).
+# The one exception: if the gateway config cannot be changed at all, an old
+# subnet may still be trusted, so this container fails and the gateway, which
+# waits for it, does not start.
 set -e
 
 if [ -f /ssh-src/id_ed25519 ] && [ -f /ssh-src/config ]; then
@@ -78,7 +81,8 @@ fall_back_to_password() {
         # Last resort: drop the trust even if the rest of the batch is rejected
         echo "openclaw-init: ERROR: password login could not be configured either (see above); trusted proxies cleared, so the dashboard rejects every login (a fresh install may not start) until the config error is fixed and 'make restart' is run." >&2
     else
-        echo "openclaw-init: ERROR: could not change the gateway config at all (see above); it may still trust an old subnet. Stop it with 'docker stop openclaw' until this is fixed." >&2
+        echo "openclaw-init: ERROR: could not change the gateway config at all (see above); it may still trust an old subnet, so the gateway is not started until this is fixed." >&2
+        exit 1
     fi
     exit 0
 }

@@ -143,12 +143,18 @@ fi
 
 # Start main services
 log_info "Starting main services..."
-docker compose -p "$PROJECT_NAME" "${MAIN_COMPOSE_FILES[@]}" up -d
+UP_STATUS=0
+docker compose -p "$PROJECT_NAME" "${MAIN_COMPOSE_FILES[@]}" up -d || UP_STATUS=$?
 
-# openclaw-init exits 0 on config errors, so surface them here too
+# openclaw-init exits 0 on config errors, so surface them here too - also when
+# 'up' failed, which a failed openclaw-init itself causes
 if is_profile_active "openclaw" && openclaw_init_failed; then
-    log_warning "openclaw-init failed: OpenClaw may be on password login (OPENCLAW_GATEWAY_PASSWORD from .env). See 'make logs s=openclaw-init'."
+    log_warning "openclaw-init failed: OpenClaw may be on password login (OPENCLAW_GATEWAY_PASSWORD from .env) or not started. See 'make logs s=openclaw-init'."
     DEGRADED=1
+fi
+if [ "$UP_STATUS" -ne 0 ]; then
+    log_error "Starting the main services failed (exit $UP_STATUS) - see the output above."
+    exit "$UP_STATUS"
 fi
 
 if [ "$DEGRADED" -eq 0 ]; then
