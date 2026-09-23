@@ -905,6 +905,61 @@ cleanup_stale_ollama_instances() {
     return 0
 }
 
+# Remove n8n worker/runner containers above the configured count.
+# Same trap as the Ollama instances above: generate_n8n_workers.sh rewrites the
+# compose file before 'down' runs, so a worker dropped by lowering
+# N8N_WORKER_COUNT becomes an orphan - and keeps taking jobs from the queue.
+# Usage: cleanup_stale_n8n_workers <keep_count>
+cleanup_stale_n8n_workers() {
+    local keep="${1:-1}"
+    local all names name
+    local removed=0
+    local failed=0
+
+    command -v docker >/dev/null 2>&1 || return 0
+
+    if ! docker info >/dev/null 2>&1; then
+        log_warning "Docker is not reachable - skipped the check for stale n8n worker containers. Re-run 'bash scripts/generate_n8n_workers.sh' once Docker is up."
+        return 0
+    fi
+
+    # Checked on its own: a failed listing must not read as "nothing to clean"
+    if ! all="$(docker ps -a --filter "label=com.docker.compose.project=localai" --format '{{.Names}}' 2>/dev/null)"; then
+        log_warning "Could not list containers - skipped the check for stale n8n worker containers. Re-run 'bash scripts/generate_n8n_workers.sh' once Docker is up."
+        return 0
+    fi
+    # Only this stack's containers. 'sort' puts n8n-runner-* before n8n-worker-*,
+    # so each runner goes before the worker whose network namespace it shares.
+    names="$(printf '%s\n' "$all" | grep -E '^n8n-(worker|runner)-[0-9]+$' | sort)" || true
+    for name in $names; do
+        if [ "${name##*-}" -gt "$keep" ]; then
+            log_info "Removing stale n8n container: $name"
+            # SIGTERM first, like 'down': a worker finishes its running executions
+            # (n8n's default graceful shutdown is 30s); a plain 'rm -f' kills them
+            # mid-step and the queue may run them again.
+            # If the stop fails, leave it running rather than SIGKILL it with 'rm -f'
+            if ! docker stop -t 30 "$name" >/dev/null 2>&1; then
+                log_error "Failed to stop stale n8n container '$name'; left running so its executions are not killed. Remove it manually: docker stop -t 30 $name && docker rm $name"
+                failed=$((failed + 1))
+            elif docker rm "$name" >/dev/null 2>&1; then
+                removed=$((removed + 1))
+            else
+                log_error "Stopped stale n8n container '$name' but could not remove it. Remove it manually: docker rm $name"
+                failed=$((failed + 1))
+            fi
+        fi
+    done
+
+    # if/fi, not '&&': see cleanup_stale_ollama_instances
+    if [ "$removed" -gt 0 ]; then
+        log_success "Removed $removed stale n8n worker/runner container(s)"
+    fi
+    if [ "$failed" -gt 0 ]; then
+        log_warning "$failed stale n8n worker/runner container(s) could not be removed - see the errors above"
+    fi
+    return 0
+}
+
 # Clean up legacy postgresus container after rename to databasus
 # This function removes the old "postgresus" container if it exists,
 # allowing the new "databasus" container to take its place.
