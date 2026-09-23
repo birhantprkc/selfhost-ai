@@ -429,6 +429,12 @@ fi
 
 # OpenClaw (basic auth is the only login; trusted-proxy mode)
 if is_profile_active "openclaw"; then
+    openclaw_model_hint="Pick a model in Settings > Models > Defaults for all agents."
+    if [ -n "${OPENCLAW_OPENROUTER_API_KEY:-}" ]; then
+        openclaw_model_hint+=" OpenRouter is connected via .env: pick an openrouter/... model."
+    else
+        openclaw_model_hint+=" To use OpenRouter, set OPENCLAW_OPENROUTER_API_KEY in .env and run 'make restart'."
+    fi
     SERVICES_ARRAY+=("    \"openclaw\": {
       \"hostname\": \"$(json_escape "$OPENCLAW_HOSTNAME")\",
       \"credentials\": {
@@ -436,7 +442,7 @@ if is_profile_active "openclaw"; then
         \"password\": \"$(json_escape "$OPENCLAW_PASSWORD")\"
       },
       \"extra\": {
-        \"recommendation\": \"Pick an LLM provider and model in the dashboard. Telegram senders: make openclaw a=\\\"pairing approve telegram <CODE>\\\". Full server access via 'ssh host' and Docker.\",
+        \"recommendation\": \"$(json_escape "$openclaw_model_hint") Telegram senders: make openclaw a=\\\"pairing approve telegram <CODE>\\\". Full server access via 'ssh host' and Docker.\",
         \"docs\": \"https://docs.openclaw.ai\"
       }
     }")
@@ -635,7 +641,7 @@ if is_profile_active "openclaw"; then
     QUICK_START_ARRAY+=("    {
       \"step\": $STEP_NUM,
       \"title\": \"Set up OpenClaw\",
-      \"description\": \"Log in and pick an LLM provider and model in the dashboard\"
+      \"description\": \"Log in and pick a model in Settings > Models > Defaults for all agents\"
     }")
     ((STEP_NUM++))
 fi

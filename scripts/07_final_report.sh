@@ -178,11 +178,14 @@ if is_profile_active "open-terminal"; then
     echo -e "       everyone you grant gets a shell in a container on the internal Docker network (treat it like SSH access)"
 fi
 if is_profile_active "openclaw"; then
-    echo -e "     ${GREEN}*${NC} ${WHITE}OpenClaw${NC}: log in with the credentials from the Welcome Page, then pick an LLM"
-    echo -e "       provider and model in the dashboard. Telegram senders get a pairing code:"
+    echo -e "     ${GREEN}*${NC} ${WHITE}OpenClaw${NC}: log in with the credentials from the Welcome Page, then pick a model"
+    echo -e "       in Settings > Models > Defaults for all agents. Telegram senders get a pairing code:"
     echo -e "       ${CYAN}make openclaw a=\"pairing approve telegram <CODE>\"${NC}"
     if [ -z "${OPENCLAW_TELEGRAM_BOT_TOKEN:-}" ]; then
         echo -e "       No Telegram token in .env: set OPENCLAW_TELEGRAM_BOT_TOKEN and run 'make restart' (or configure Telegram in the dashboard)"
+    fi
+    if [ -z "${OPENCLAW_OPENROUTER_API_KEY:-}" ]; then
+        echo -e "       Optional: to use OpenRouter, set OPENCLAW_OPENROUTER_API_KEY in .env and run 'make restart' (or connect a provider in Settings > Models)"
     fi
     echo -e "       ${YELLOW}Warning:${NC} the agent has full server access ('ssh host' as $(get_real_user), Docker socket)"
     if openclaw_init_failed; then

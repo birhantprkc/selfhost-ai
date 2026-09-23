@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.15.0] - 2026-09-23
+
+### Added
+- **OpenClaw** - Install and `make update` ask for an optional OpenRouter API key (`OPENCLAW_OPENROUTER_API_KEY`, passed to the gateway as `OPENROUTER_API_KEY`; asked again on each `make update` while it is empty; surrounding whitespace is trimmed and a value with characters a key cannot have, such as pasted quotes or inner spaces, is rejected instead of breaking `.env`), so OpenRouter needs no provider or sign-in setup in the dashboard; only the model is picked there (Settings → Models → Defaults for all agents). The dashboard's OpenRouter OAuth cannot complete behind the domain because OpenClaw fixes its callback to `localhost:3000`; `docs/openclaw.md` explains this, shows where the model is picked and warns about the "OpenRouter API key" choice under Arcee AI, which installs a separate plugin whose setup check failed in testing even with a valid key.
+
 ## [1.14.2] - 2026-09-23
 
 ### Changed
