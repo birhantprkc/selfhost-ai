@@ -355,6 +355,8 @@ services:
     # including the ${OPENCLAW_HOSTNAME} / ${OPENCLAW_USERNAME} references and,
     # on the password-login fallback, the gateway password.
     # TELEGRAM_BOT_TOKEN decides whether init.sh switches the channel on.
+    # OPENROUTER_API_KEY is gateway-only: init.sh writes no reference to it into
+    # openclaw.json (a hand-added ${OPENROUTER_API_KEY} reference would need it here too).
     environment:
       OPENCLAW_GATEWAY_PASSWORD: "${OPENCLAW_GATEWAY_PASSWORD}"
       OPENCLAW_HOSTNAME: "${OPENCLAW_HOSTNAME:-openclaw.localhost}"
@@ -387,6 +389,7 @@ services:
       OPENCLAW_GATEWAY_PASSWORD: "${OPENCLAW_GATEWAY_PASSWORD}"
       OPENCLAW_HOSTNAME: "${OPENCLAW_HOSTNAME:-openclaw.localhost}"
       OPENCLAW_USERNAME: "${OPENCLAW_USERNAME}"
+      OPENROUTER_API_KEY: "${OPENCLAW_OPENROUTER_API_KEY:-}"
       TELEGRAM_BOT_TOKEN: "${OPENCLAW_TELEGRAM_BOT_TOKEN:-}"
       TZ: "${GENERIC_TIMEZONE:-UTC}"
     # Caddy reaches the gateway as openclaw-gateway, an alias that exists only on
