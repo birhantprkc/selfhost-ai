@@ -39,7 +39,6 @@ This is **Selfhost AI** (repository `selfhost-ai`, formerly `n8n-install`), a Do
 - `scripts/doctor.sh`: System diagnostics (DNS, SSL, containers, disk, memory)
 - `scripts/apply_update.sh`: Applies updates after git sync
 - `scripts/docker_cleanup.sh`: Removes unused Docker resources (used by `make clean`)
-- `scripts/download_top_workflows.sh`: Downloads community n8n workflows
 - `scripts/import_workflows.sh`: Imports workflows from `n8n/backup/workflows/` into n8n (used by `make import`)
 - `scripts/restart.sh`: Restarts services with proper compose file handling (used by `make restart`)
 - `scripts/setup_custom_tls.sh`: Configures custom TLS certificates (used by `make setup-tls`); supports `--remove` to revert to Let's Encrypt
