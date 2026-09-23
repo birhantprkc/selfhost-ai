@@ -210,7 +210,7 @@ After successful installation, your services are up and running! Here's how to g
     - **NocoDB:** `nocodb.yourdomain.com`
     - **Ollama:** `ollama.yourdomain.com` (Optional local-LLM API; every request must send `Authorization: Bearer <OLLAMA_CADDY_API_TOKEN>`. A leaked token grants full control — including pulling/deleting models — not just inference.)
     - **Open WebUI:** `webui.yourdomain.com`
-    - **OpenClaw:** `openclaw.yourdomain.com` (Caddy basic auth, then the Gateway password; approve each new browser once)
+    - **OpenClaw:** `openclaw.yourdomain.com` (Caddy basic auth; the dashboard opens right after it)
     - **PaddleOCR:** `paddleocr.yourdomain.com`
     - **Portainer:** `portainer.yourdomain.com` (Protected by Caddy basic auth; on first login, complete Portainer admin setup)
     - **Postiz:** `postiz.yourdomain.com`
@@ -246,7 +246,7 @@ Open WebUI can search, read and reason, and its built-in code interpreter runs a
 
 [OpenClaw](https://docs.openclaw.ai) is a personal AI agent with a web dashboard and chat channels. Select **OpenClaw** in the wizard (`openclaw` profile). The installer asks for a Telegram bot token from [@BotFather](https://t.me/BotFather), which you can leave empty and set later as `OPENCLAW_TELEGRAM_BOT_TOKEN`.
 
-- **Login**: open `openclaw.yourdomain.com`, pass the Caddy basic auth and enter the Gateway password. All credentials are on the Welcome Page. OpenClaw asks you to approve every new browser once; run `make openclaw a="devices list"`, then `make openclaw a="devices approve <requestId>"`.
+- **Login**: open `openclaw.yourdomain.com` and pass the Caddy basic auth (credentials are on the Welcome Page); the dashboard opens right away. OpenClaw runs in trusted-proxy mode: Caddy passes the authenticated user over a private Docker network that only Caddy and OpenClaw share, and new browsers are approved automatically. The basic-auth password is therefore the only key to the agent - and to the server - so keep it like a root password. Any process on the server itself can also reach OpenClaw as a trusted proxy, so do not enable this profile on a server shared with untrusted local users. If `make doctor` or the final report shows an `openclaw-init` error, OpenClaw has most likely fallen back to password login (`make logs s=openclaw-init` says which state it is in): use `OPENCLAW_GATEWAY_PASSWORD` from `.env` and approve the browser with `make openclaw a="devices list"` / `a="devices approve <requestId>"`.
 - **Model**: choose the LLM provider and model in the dashboard. Until you do, the agent cannot answer.
 - **Telegram**: the bot uses long polling, so it needs no public URL. A new sender gets a pairing code, which you approve with `make openclaw a="pairing approve telegram <CODE>"` or in the dashboard. You can switch to an allowlist of Telegram user IDs in the dashboard.
 - **Full server access, by design**: the container mounts the Docker socket and gets an SSH key authorized for the installing user. From the container, `ssh host` opens a shell on the server and `docker` controls every container. Anyone who can talk to the agent in the dashboard or Telegram controls the server, so approve senders carefully. `ssh host` needs the server's sshd to accept connections from the Docker bridge (the default `0.0.0.0:22`). The key is removed from `authorized_keys` the next time the installer or `make update` runs with the profile off (including the run where you deselect it); `make restart` alone does not remove it, and the key files stay in `openclaw/ssh/`.

@@ -165,12 +165,10 @@ if is_profile_active "n8n-sandbox"; then
     fi
 fi
 
-# OpenClaw: openclaw-init exits 0 even when 'config set' fails (so the rest of
-# the stack still starts), hence check the output of its last run
+# OpenClaw: openclaw-init reports failures only in its log (see utils.sh)
 if is_profile_active "openclaw" && docker inspect openclaw-init &> /dev/null; then
-    OPENCLAW_INIT_STARTED="$(docker inspect openclaw-init --format '{{.State.StartedAt}}' 2>/dev/null)"
-    if docker logs --since "$OPENCLAW_INIT_STARTED" openclaw-init 2>&1 | grep -q '^openclaw-init: ERROR'; then
-        count_error "openclaw-init could not apply the OpenClaw gateway settings - see 'make logs s=openclaw-init'."
+    if openclaw_init_failed; then
+        count_error "openclaw-init failed - OpenClaw login through Caddy alone is not active (password login or unconfigured). See 'make logs s=openclaw-init'."
     else
         count_ok "openclaw-init applied the OpenClaw gateway settings"
     fi

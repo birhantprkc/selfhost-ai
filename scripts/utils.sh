@@ -414,6 +414,18 @@ get_ollama_instances_compose() {
     return 1
 }
 
+# True if the last openclaw-init run exited non-zero or logged an error. Config
+# errors still exit 0 (so the rest of the stack starts), hence the log check;
+# --since skips the output of earlier runs of the same container. False when
+# the container does not exist.
+# Usage: if openclaw_init_failed; then ...
+openclaw_init_failed() {
+    local state
+    state="$(docker inspect openclaw-init --format '{{.State.StartedAt}} {{.State.ExitCode}}' 2>/dev/null)" || return 1
+    [ "${state##* }" != "0" ] && return 0
+    docker logs --since "${state% *}" openclaw-init 2>&1 | grep -q '^openclaw-init: ERROR'
+}
+
 # Get the Open WebUI PostgreSQL override path if the open-webui profile is
 # active and OPEN_WEBUI_DATABASE is "postgres" (requires load_env first).
 # Without it, Open WebUI keeps its SQLite database in the open-webui volume.

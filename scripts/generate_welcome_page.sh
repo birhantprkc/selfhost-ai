@@ -427,7 +427,7 @@ if is_profile_active "open-terminal"; then
     }")
 fi
 
-# OpenClaw (basic auth, then the gateway password inside the dashboard)
+# OpenClaw (basic auth is the only login; trusted-proxy mode)
 if is_profile_active "openclaw"; then
     SERVICES_ARRAY+=("    \"openclaw\": {
       \"hostname\": \"$(json_escape "$OPENCLAW_HOSTNAME")\",
@@ -436,8 +436,7 @@ if is_profile_active "openclaw"; then
         \"password\": \"$(json_escape "$OPENCLAW_PASSWORD")\"
       },
       \"extra\": {
-        \"gateway_password\": \"$(json_escape "$OPENCLAW_GATEWAY_PASSWORD")\",
-        \"recommendation\": \"Enter the Gateway password in the dashboard, then approve the browser on the server: make openclaw a=\\\"devices list\\\", then a=\\\"devices approve <requestId>\\\". Telegram senders: make openclaw a=\\\"pairing approve telegram <CODE>\\\". Full server access via 'ssh host' and Docker.\",
+        \"recommendation\": \"Pick an LLM provider and model in the dashboard. Telegram senders: make openclaw a=\\\"pairing approve telegram <CODE>\\\". Full server access via 'ssh host' and Docker.\",
         \"docs\": \"https://docs.openclaw.ai\"
       }
     }")
@@ -636,7 +635,7 @@ if is_profile_active "openclaw"; then
     QUICK_START_ARRAY+=("    {
       \"step\": $STEP_NUM,
       \"title\": \"Set up OpenClaw\",
-      \"description\": \"Log in, approve the browser with 'make openclaw a=\\\"devices approve <requestId>\\\"', then pick an LLM provider and model in the dashboard\"
+      \"description\": \"Log in and pick an LLM provider and model in the dashboard\"
     }")
     ((STEP_NUM++))
 fi

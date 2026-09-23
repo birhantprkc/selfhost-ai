@@ -178,14 +178,17 @@ if is_profile_active "open-terminal"; then
     echo -e "       everyone you grant gets a shell in a container on the internal Docker network (treat it like SSH access)"
 fi
 if is_profile_active "openclaw"; then
-    echo -e "     ${GREEN}*${NC} ${WHITE}OpenClaw${NC}: log in (basic auth), enter the Gateway password (both on the Welcome Page), then approve the browser:"
-    echo -e "       ${CYAN}make openclaw a=\"devices list\"${NC}  then  ${CYAN}make openclaw a=\"devices approve <requestId>\"${NC}"
-    echo -e "       Pick an LLM provider and model in the dashboard. Telegram senders get a pairing code:"
+    echo -e "     ${GREEN}*${NC} ${WHITE}OpenClaw${NC}: log in with the credentials from the Welcome Page, then pick an LLM"
+    echo -e "       provider and model in the dashboard. Telegram senders get a pairing code:"
     echo -e "       ${CYAN}make openclaw a=\"pairing approve telegram <CODE>\"${NC}"
     if [ -z "${OPENCLAW_TELEGRAM_BOT_TOKEN:-}" ]; then
         echo -e "       No Telegram token in .env: set OPENCLAW_TELEGRAM_BOT_TOKEN and run 'make restart' (or configure Telegram in the dashboard)"
     fi
     echo -e "       ${YELLOW}Warning:${NC} the agent has full server access ('ssh host' as $(get_real_user), Docker socket)"
+    if openclaw_init_failed; then
+        echo -e "       ${RED}openclaw-init failed${NC}: the dashboard has likely fallen back to OPENCLAW_GATEWAY_PASSWORD"
+        echo -e "       from .env plus browser approval. See 'make logs s=openclaw-init' and run 'make doctor'"
+    fi
 fi
 if is_profile_active "crawl4ai"; then
     echo -e "     ${GREEN}*${NC} ${WHITE}Crawl4AI${NC}: Internal API at http://crawl4ai:11235 - requests must send 'Authorization: Bearer <token>' (token on Welcome Page)"
