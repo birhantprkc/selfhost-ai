@@ -327,17 +327,18 @@ if is_profile_active "openclaw"; then
 
     # OpenRouter's OAuth in the dashboard cannot work behind the domain (its
     # callback is fixed to localhost:3000), so the API key comes from .env
-    openrouter_key="$(tr -d '[:space:]' <<< "$(read_env_var OPENCLAW_OPENROUTER_API_KEY)")"
+    openrouter_key="$(sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' <<< "$(read_env_var OPENCLAW_OPENROUTER_API_KEY)")"
     if [ -n "$openrouter_key" ]; then
         log_info "OpenClaw OpenRouter API key found in .env; reusing it."
     else
         require_whiptail
         openrouter_key=$(wt_input "OpenClaw OpenRouter" "Enter your OpenRouter API key from https://openrouter.ai/keys (leave empty to skip).\n\nThen pick an openrouter/... model in the dashboard: Settings > Models > Defaults for all agents." "") || true
-        openrouter_key="$(tr -d '[:space:]' <<< "$openrouter_key")"
+        openrouter_key="$(sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' <<< "$openrouter_key")"
     fi
-    # A pasted quote would make .env unreadable for docker compose (whole stack)
+    # A pasted quote would make .env unreadable for docker compose (whole stack);
+    # inner whitespace is rejected rather than removed, which would change the key
     if [[ -n "$openrouter_key" && ! "$openrouter_key" =~ ^[A-Za-z0-9_-]+$ ]]; then
-        log_error "The OpenRouter API key contains characters a key cannot have (quotes?); it was not saved. Set OPENCLAW_OPENROUTER_API_KEY in .env and run 'make restart'."
+        log_error "The OpenRouter API key contains characters a key cannot have (quotes or spaces?); it was not saved. Set OPENCLAW_OPENROUTER_API_KEY in .env and run 'make restart'."
         openrouter_key=""
     fi
     write_env_var "OPENCLAW_OPENROUTER_API_KEY" "$openrouter_key"
