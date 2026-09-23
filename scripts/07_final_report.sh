@@ -126,7 +126,7 @@ if is_profile_active "open-webui"; then
     echo -e "     ${GREEN}*${NC} ${WHITE}Open WebUI${NC}: Register your account"
     if [ "${OPEN_WEBUI_DATABASE:-sqlite}" != "postgres" ]; then
         echo -e "       ${WHITE}Storage${NC}: SQLite. PostgreSQL avoids 'database is locked' errors with"
-        echo -e "       several tabs/devices - see 'Open WebUI: SQLite or PostgreSQL' in the README"
+        echo -e "       several tabs/devices - see docs/open-webui-postgres.md"
         echo -e "       (switching requires manual data migration)."
     else
         echo -e "       ${WHITE}Storage${NC}: PostgreSQL (database 'openwebui')"

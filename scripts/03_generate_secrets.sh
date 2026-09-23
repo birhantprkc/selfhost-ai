@@ -341,7 +341,7 @@ done
 # Upgrades: keep SQLite. Open WebUI does not migrate data between backends, so
 #   flipping this on an existing install would present an empty UI while the
 #   old chats stayed in webui.db inside the open-webui volume. Opting in is a
-#   documented manual step - see the README.
+#   documented manual step - see docs/open-webui-postgres.md.
 if [[ -z "${existing_env_vars[OPEN_WEBUI_DATABASE]}" ]]; then
     if [[ ${#existing_env_vars[@]} -gt 0 ]]; then
         generated_values["OPEN_WEBUI_DATABASE"]="sqlite"

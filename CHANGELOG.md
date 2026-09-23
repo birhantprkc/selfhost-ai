@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [1.14.2] - 2026-09-23
+
+### Changed
+- **Documentation** - README restructured: quick start near the top, services grouped into category tables with their URLs (replacing the separate service list and URL list), and a single Makefile table. Detailed guides moved to `docs/` (`n8n.md`, `n8n-assistant-sandbox.md`, `openclaw.md`, `open-terminal.md`, `ollama-multi-gpu.md`, `open-webui-postgres.md`, `security.md`), content unchanged apart from headings and short intros; installer messages and `.env.example` now point there.
+
+### Fixed
+- **make doctor** - The DNS check now covers the hostname of every active profile that has a Caddy site (plus the Welcome Page), instead of a fixed n8n / Grafana / Portainer / Welcome list that was checked whether or not those services were selected. An active service whose hostname is empty or still `*.yourdomain.com` is now a warning instead of being skipped silently, and a missing `host` binary skips the DNS checks with one warning instead of reporting every hostname as unresolvable.
+
 ## [1.14.1] - 2026-09-23
 
 ### Changed
