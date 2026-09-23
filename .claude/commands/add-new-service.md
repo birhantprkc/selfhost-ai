@@ -290,6 +290,14 @@ Note: Non-standard ports must be exposed in Caddy's `ports:` section in docker-c
 }
 ```
 
+### 2.6 DNS Check in `make doctor`
+
+For every new Caddy site block, add the profile and hostname variable to `DNS_PROFILE_HOSTNAMES` in `scripts/doctor.sh` (alphabetical order; one line per profile if the service has hardware variants):
+
+```bash
+    "$ARGUMENTS ${SERVICE_NAME_UPPER}_HOSTNAME"
+```
+
 ---
 
 ## STEP 3: .env.example
@@ -591,19 +599,15 @@ color: 'bg-lime-500'      // Another named color
 
 ### 8.1 What's Included Section
 
-Add one-line description:
+Add a row to the category table that fits (AI Chat and Agents, Workflow Automation, Local LLMs and Image Generation, RAG, Vector and Graph Databases, Documents, OCR, Web Scraping and Search, Low-Code Apps and Data, Monitoring and Operations). Keep the description short and keyword-rich; use `internal` in the URL column for services without a Caddy block:
 
 ```markdown
-✅ [**${SERVICE_NAME_TITLE}**](<DOCS_URL>) - <One-line description>
+| [${SERVICE_NAME_TITLE}](<DOCS_URL>) | <One-line description> | `$ARGUMENTS.` |
 ```
 
-### 8.2 Quick Start and Usage Section
+### 8.2 Guide (only if setup is non-trivial)
 
-Add service URL (alphabetical order):
-
-```markdown
-- **${SERVICE_NAME_TITLE}:** `$ARGUMENTS.yourdomain.com` (<Brief description>)
-```
+Long setup notes do not go into README. Put them in `docs/$ARGUMENTS.md`, link it from the table row (`([guide](docs/$ARGUMENTS.md))`) and add it to the README "Guides" list.
 
 ---
 
@@ -707,13 +711,14 @@ bash -n scripts/07_final_report.sh
 - [ ] `docker-compose.yml`: service with `profiles`, `container_name`, `logging`
 - [ ] `docker-compose.yml`: caddy environment vars (if external)
 - [ ] `Caddyfile`: reverse proxy block (if external)
+- [ ] `scripts/doctor.sh`: `DNS_PROFILE_HOSTNAMES` entry (if it has a Caddy site block)
 - [ ] `.env.example`: hostname added
 - [ ] `.env.example`: service added to `GOST_NO_PROXY` (ALL internal services must be listed)
 - [ ] `scripts/03_generate_secrets.sh`: password in `VARS_TO_GENERATE`
 - [ ] `scripts/04_wizard.sh`: service in `base_services_data`
 - [ ] `scripts/generate_welcome_page.sh`: `SERVICES_ARRAY` entry
 - [ ] `welcome/app.js`: `SERVICE_METADATA` entry
-- [ ] `README.md`: description added
+- [ ] `README.md`: row added to the matching "What's Included" table
 - [ ] `CHANGELOG.md`: entry added
 
 ### If Basic Auth

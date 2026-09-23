@@ -290,7 +290,12 @@ check_dns() {
     local hostname="$1"
     local varname="$2"
 
-    if [ -z "$hostname" ] || [ "$hostname" == "yourdomain.com" ] || [[ "$hostname" == *".yourdomain.com" ]]; then
+    if [ -z "$hostname" ]; then
+        count_warning "$varname is not set"
+        return
+    fi
+    if [ "$hostname" == "yourdomain.com" ] || [[ "$hostname" == *".yourdomain.com" ]]; then
+        count_warning "$varname still uses the yourdomain.com placeholder ($hostname)"
         return
     fi
 
@@ -301,12 +306,58 @@ check_dns() {
     fi
 }
 
+# "profile HOSTNAME_VAR" for every profile-gated Caddy site block (Welcome is
+# checked unconditionally below). Add new services here too.
+DNS_PROFILE_HOSTNAMES=(
+    "appsmith APPSMITH_HOSTNAME"
+    "comfyui-amd COMFYUI_HOSTNAME"
+    "comfyui-cpu COMFYUI_HOSTNAME"
+    "comfyui-nvidia COMFYUI_HOSTNAME"
+    "cpu OLLAMA_HOSTNAME"
+    "databasus DATABASUS_HOSTNAME"
+    "dify DIFY_HOSTNAME"
+    "docling DOCLING_HOSTNAME"
+    "flowise FLOWISE_HOSTNAME"
+    "gpu-amd OLLAMA_HOSTNAME"
+    "gpu-nvidia OLLAMA_HOSTNAME"
+    "invokeai-amd INVOKEAI_HOSTNAME"
+    "invokeai-cpu INVOKEAI_HOSTNAME"
+    "invokeai-nvidia INVOKEAI_HOSTNAME"
+    "langfuse LANGFUSE_HOSTNAME"
+    "letta LETTA_HOSTNAME"
+    "libretranslate LT_HOSTNAME"
+    "lightrag LIGHTRAG_HOSTNAME"
+    "monitoring GRAFANA_HOSTNAME"
+    "monitoring PROMETHEUS_HOSTNAME"
+    "n8n N8N_HOSTNAME"
+    "n8n-mcp N8N_MCP_HOSTNAME"
+    "neo4j NEO4J_HOSTNAME"
+    "nocodb NOCODB_HOSTNAME"
+    "open-webui WEBUI_HOSTNAME"
+    "openclaw OPENCLAW_HOSTNAME"
+    "paddleocr PADDLEOCR_HOSTNAME"
+    "portainer PORTAINER_HOSTNAME"
+    "postiz POSTIZ_HOSTNAME"
+    "postiz TEMPORAL_UI_HOSTNAME"
+    "qdrant QDRANT_HOSTNAME"
+    "ragapp RAGAPP_HOSTNAME"
+    "ragflow RAGFLOW_HOSTNAME"
+    "searxng SEARXNG_HOSTNAME"
+    "supabase SUPABASE_HOSTNAME"
+    "uptime-kuma UPTIME_KUMA_HOSTNAME"
+    "waha WAHA_HOSTNAME"
+    "weaviate WEAVIATE_HOSTNAME"
+)
+
 # Only check if we have a real domain
-if [ -n "$USER_DOMAIN_NAME" ] && [ "$USER_DOMAIN_NAME" != "yourdomain.com" ]; then
-    check_dns "$N8N_HOSTNAME" "N8N_HOSTNAME"
-    check_dns "$GRAFANA_HOSTNAME" "GRAFANA_HOSTNAME"
-    check_dns "$PORTAINER_HOSTNAME" "PORTAINER_HOSTNAME"
+if ! command -v host &> /dev/null; then
+    count_warning "'host' command not found (apt install bind9-host) - DNS checks skipped"
+elif [ -n "$USER_DOMAIN_NAME" ] && [ "$USER_DOMAIN_NAME" != "yourdomain.com" ]; then
     check_dns "$WELCOME_HOSTNAME" "WELCOME_HOSTNAME"
+    for entry in "${DNS_PROFILE_HOSTNAMES[@]}"; do
+        read -r profile varname <<< "$entry"
+        is_profile_active "$profile" && check_dns "${!varname}" "$varname"
+    done
 else
     print_info "Skipping DNS checks (no domain configured)"
 fi

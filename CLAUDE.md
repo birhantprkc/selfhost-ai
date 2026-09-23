@@ -104,7 +104,7 @@ make help              # Show all available commands
 Follow this workflow when adding a new optional service (refer to `.claude/commands/add-new-service.md` for complete details):
 
 1. **docker-compose.yml**: Add service with `profiles: ["myservice"]`, `restart: unless-stopped`. Do NOT expose ports.
-2. **Caddyfile**: Add reverse proxy block using `{$MYSERVICE_HOSTNAME}`. Consider if basic auth is needed.
+2. **Caddyfile**: Add reverse proxy block using `{$MYSERVICE_HOSTNAME}`. Consider if basic auth is needed. Add the `"myservice MYSERVICE_HOSTNAME"` pair to `DNS_PROFILE_HOSTNAMES` in `scripts/doctor.sh` so `make doctor` checks its DNS.
 3. **.env.example**: Add `MYSERVICE_HOSTNAME=myservice.yourdomain.com` and credentials if using basic auth.
 4. **scripts/03_generate_secrets.sh**: Generate passwords and bcrypt hashes. Add to `VARS_TO_GENERATE` map.
 5. **scripts/04_wizard.sh**: Add service to `base_services_data` array for wizard selection.
@@ -112,7 +112,7 @@ Follow this workflow when adding a new optional service (refer to `.claude/comma
 7. **scripts/generate_welcome_page.sh**: Add service to `SERVICES_ARRAY` for welcome dashboard.
 8. **welcome/app.js**: Add `SERVICE_METADATA` entry with name, description, icon, color, category.
 9. **scripts/07_final_report.sh**: Add service URL and credentials output using `is_profile_active "myservice"`.
-10. **README.md**: Add one-line description under "What's Included".
+10. **README.md**: Add a row to the matching category table under "What's Included". Longer setup notes go into `docs/<service>.md` (linked from the row and the "Guides" list), not into README.
 11. **CHANGELOG.md**: Add entry under `## [Unreleased]` → `### Added` (new service = minor version bump).
 
 **Always ask users if the new service requires Caddy basic auth protection.**
