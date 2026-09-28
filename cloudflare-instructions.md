@@ -118,6 +118,7 @@ After DNS is configured, go to **Cloudflare One Dashboard** → **Networks** →
 | **Flowise**        | flowise.yourdomain.com        | `http://flowise:3001`        | Built-in login      |
 | **Grafana**        | grafana.yourdomain.com        | `http://grafana:3000`        | Built-in login      |
 | **InvokeAI**       | invokeai.yourdomain.com       | `http://invokeai:9090`       | ⚠️ Loses Caddy auth  |
+| **Keelflow**       | keelflow.yourdomain.com       | `http://keelflow:3000`       | Built-in login      |
 | **Langfuse**       | langfuse.yourdomain.com       | `http://langfuse-web:3000`   | Built-in login      |
 | **Letta**          | letta.yourdomain.com          | `http://letta:8283`          | No auth             |
 | **LibreTranslate** | libretranslate.yourdomain.com | `http://libretranslate:5000` | ⚠️ Loses Caddy auth  |

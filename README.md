@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Ubuntu](https://img.shields.io/badge/Ubuntu-24.04%20LTS-E95420?logo=ubuntu&logoColor=white)](https://ubuntu.com/)
 
-**Deploy 30+ open-source AI and automation tools on your own server with a single command.** Selfhost AI is a Docker Compose installer for a private AI homelab: n8n workflow automation, local LLMs with Ollama, a ChatGPT-style chat in Open WebUI, AI agents (OpenClaw, Flowise, Dify, Letta), RAG engines and vector databases (Qdrant, Weaviate, LightRAG, RAGFlow), Supabase, ComfyUI and Grafana monitoring. An interactive wizard picks the services, generates every secret and puts them all behind Caddy with automatic HTTPS. A free, self-hosted alternative to Zapier, Make and ChatGPT.
+**Deploy 30+ open-source AI and automation tools on your own server with a single command.** Selfhost AI is a Docker Compose installer for a private AI homelab: n8n workflow automation, local LLMs with Ollama, a ChatGPT-style chat in Open WebUI, AI agents (OpenClaw, Flowise, Keelflow, Dify, Letta), RAG engines and vector databases (Qdrant, Weaviate, LightRAG, RAGFlow), Supabase, ComfyUI and Grafana monitoring. An interactive wizard picks the services, generates every secret and puts them all behind Caddy with automatic HTTPS. A free, self-hosted alternative to Zapier, Make and ChatGPT.
 
 ## Quick Start
 
@@ -23,7 +23,7 @@ The wizard does the rest; see [Installation](#installation) for what it asks.
 - **Private AI homelab**: run LLMs locally with Ollama, on CPU, NVIDIA or AMD GPUs, including multi-GPU; your data stays on your server
 - **ChatGPT alternative**: Open WebUI for local and API models, with an optional code-execution sandbox
 - **Workflow automation**: n8n with 400+ integrations, queue mode with scalable workers, an MCP server for AI IDEs, and 300+ optional community workflows
-- **AI agents and RAG**: OpenClaw (with Telegram), Flowise, Dify, Letta, LightRAG, RAGFlow, Qdrant, Weaviate
+- **AI agents and RAG**: OpenClaw (with Telegram), Flowise, Keelflow, Dify, Letta, LightRAG, RAGFlow, Qdrant, Weaviate
 - **Automatic HTTPS**: Caddy reverse proxy with Let's Encrypt; services are reached only through Caddy (see [security notes](docs/security.md) for Supabase's ports); optional Cloudflare Tunnel
 - **Built-in monitoring**: Grafana and Prometheus with an n8n workflow dashboard and ready-made alerts
 - **Production ready**: health checks, service dependencies, `make doctor` diagnostics, and updates that preserve your settings
@@ -40,7 +40,8 @@ The wizard does the rest; see [Installation](#installation) for what it asks.
 | [Open WebUI](https://openwebui.com/) | ChatGPT-like interface for local and API LLMs and n8n agents | `webui.` |
 | [OpenClaw](https://docs.openclaw.ai) | Personal AI agent with a web dashboard, a Telegram bot, and full server access ([guide](docs/openclaw.md)) | `openclaw.` |
 | [Open Terminal](https://docs.openwebui.com/features/open-terminal/) | Linux shell sandbox for Open WebUI agents, with a separate account per user ([guide](docs/open-terminal.md)) | internal |
-| [Flowise](https://flowiseai.com/) | No-code / low-code AI agent builder | `flowise.` |
+| [Flowise](https://flowiseai.com/) | No-code / low-code AI agent builder (archived upstream) | `flowise.` |
+| [Keelflow](https://github.com/Perruer/keelflow) | No-code / low-code AI agent builder, continuation of Flowise; can take over existing Flowise data ([guide](docs/keelflow.md)) | `keelflow.` |
 | [Dify](https://dify.ai/) | AI application platform with LLMOps, RAG pipelines and agent orchestration | `dify.` |
 | [Letta](https://docs.letta.com/) | Agent server and SDK with persistent memory (formerly MemGPT) | `letta.` |
 
@@ -173,6 +174,7 @@ Run `make help` for the full list.
 - [n8n Assistant sandbox and Sysbox](docs/n8n-assistant-sandbox.md)
 - [OpenClaw: AI agent with Telegram and server access](docs/openclaw.md)
 - [Open Terminal for Open WebUI](docs/open-terminal.md)
+- [Keelflow: Moving from Flowise](docs/keelflow.md)
 - [Ollama on multi-GPU hosts](docs/ollama-multi-gpu.md)
 - [Open WebUI: SQLite or PostgreSQL](docs/open-webui-postgres.md)
 - [Security notes: published ports and the firewall](docs/security.md)

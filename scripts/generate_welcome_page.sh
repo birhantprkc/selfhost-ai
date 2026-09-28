@@ -64,6 +64,16 @@ if is_profile_active "flowise"; then
     }")
 fi
 
+# Keelflow
+if is_profile_active "keelflow"; then
+    SERVICES_ARRAY+=("    \"keelflow\": {
+      \"hostname\": \"$(json_escape "$KEELFLOW_HOSTNAME")\",
+      \"credentials\": {
+        \"note\": \"Create your account on first login\"
+      }
+    }")
+fi
+
 # Open WebUI
 if is_profile_active "open-webui"; then
     SERVICES_ARRAY+=("    \"open-webui\": {
@@ -598,11 +608,18 @@ done
 declare -a QUICK_START_ARRAY
 STEP_NUM=1
 
-# Step 1: Log into primary service (n8n or Flowise)
+# Step 1: Log into primary service (n8n, Keelflow or Flowise)
 if is_profile_active "n8n"; then
     QUICK_START_ARRAY+=("    {
       \"step\": $STEP_NUM,
       \"title\": \"Log into n8n\",
+      \"description\": \"Create your account on first login\"
+    }")
+    ((STEP_NUM++))
+elif is_profile_active "keelflow"; then
+    QUICK_START_ARRAY+=("    {
+      \"step\": $STEP_NUM,
+      \"title\": \"Log into Keelflow\",
       \"description\": \"Create your account on first login\"
     }")
     ((STEP_NUM++))

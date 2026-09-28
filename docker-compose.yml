@@ -6,6 +6,7 @@ volumes:
   docling_cache:
   flowise:
   grafana:
+  keelflow_data:
   langfuse_clickhouse_data:
   langfuse_clickhouse_logs:
   langfuse_minio_data:
@@ -244,7 +245,10 @@ services:
       start_period: 120s
 
   flowise:
-    image: flowiseai/flowise
+    # Pinned: 3.1.4 crashes at startup with SQLite ("this.db.exec is not a
+    # function") and runs as 'node', ignoring the /root/.flowise mount.
+    # Keep in sync with scripts/update_preview.sh.
+    image: flowiseai/flowise:3.1.3
     restart: unless-stopped
     container_name: flowise
     profiles: ["flowise"]
@@ -256,6 +260,26 @@ services:
     volumes:
       - ~/.flowise:/root/.flowise
     entrypoint: /bin/sh -c "sleep 3; flowise start"
+
+  keelflow:
+    image: ghcr.io/perruer/keelflow:latest
+    restart: unless-stopped
+    container_name: keelflow
+    profiles: ["keelflow"]
+    logging: *default-logging
+    environment:
+      <<: *proxy-env
+      KEELFLOW_HOME: /home/node/.keelflow
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - keelflow_data:/home/node/.keelflow
+    healthcheck:
+      test: ["CMD-SHELL", "http_proxy= https_proxy= HTTP_PROXY= HTTPS_PROXY= curl -fsS http://localhost:3000/api/v1/ping || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
   # ---------------------------------------------------------------------------
   # Open Terminal (profile "open-terminal") - execution environment for Open WebUI
@@ -753,6 +777,7 @@ services:
       INVOKEAI_HOSTNAME: "${INVOKEAI_HOSTNAME}"
       INVOKEAI_PASSWORD_HASH: "${INVOKEAI_PASSWORD_HASH}"
       INVOKEAI_USERNAME: "${INVOKEAI_USERNAME}"
+      KEELFLOW_HOSTNAME: "${KEELFLOW_HOSTNAME}"
       LANGFUSE_HOSTNAME: "${LANGFUSE_HOSTNAME}"
       LETSENCRYPT_EMAIL: "${LETSENCRYPT_EMAIL:-internal}"
       LETTA_HOSTNAME: "${LETTA_HOSTNAME}"

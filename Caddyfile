@@ -91,6 +91,12 @@ import /etc/caddy/addons/tls-snippet.conf
     reverse_proxy flowise:3001
 }
 
+# Keelflow
+{$KEELFLOW_HOSTNAME} {
+    import service_tls
+    reverse_proxy keelflow:3000
+}
+
 # Dify
 {$DIFY_HOSTNAME} {
     import service_tls

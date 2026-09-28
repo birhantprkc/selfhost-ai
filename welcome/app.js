@@ -182,11 +182,19 @@
         },
         'flowise': {
             name: 'Flowise',
-            description: 'AI Agent Builder',
+            description: 'AI Agent Builder (archived upstream, see Keelflow)',
             icon: 'FL',
             color: 'bg-[#673AB7]',
             category: 'ai',
             docsUrl: 'https://docs.flowiseai.com'
+        },
+        'keelflow': {
+            name: 'Keelflow',
+            description: 'AI Agent Builder (continuation of Flowise)',
+            icon: 'KF',
+            color: 'bg-[#1E6FD9]',
+            category: 'ai',
+            docsUrl: 'https://github.com/Perruer/keelflow'
         },
         'open-terminal': {
             name: 'Open Terminal',
