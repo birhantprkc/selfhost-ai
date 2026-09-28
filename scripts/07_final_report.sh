@@ -122,6 +122,9 @@ fi
 if is_profile_active "flowise"; then
     echo -e "     ${GREEN}*${NC} ${WHITE}Flowise${NC}: Register and create your account"
 fi
+if is_profile_active "keelflow"; then
+    echo -e "     ${GREEN}*${NC} ${WHITE}Keelflow${NC}: Register and create your account"
+fi
 if is_profile_active "open-webui"; then
     echo -e "     ${GREEN}*${NC} ${WHITE}Open WebUI${NC}: Register your account"
     if [ "${OPEN_WEBUI_DATABASE:-sqlite}" != "postgres" ]; then

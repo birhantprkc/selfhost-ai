@@ -323,6 +323,7 @@ DNS_PROFILE_HOSTNAMES=(
     "invokeai-amd INVOKEAI_HOSTNAME"
     "invokeai-cpu INVOKEAI_HOSTNAME"
     "invokeai-nvidia INVOKEAI_HOSTNAME"
+    "keelflow KEELFLOW_HOSTNAME"
     "langfuse LANGFUSE_HOSTNAME"
     "letta LETTA_HOSTNAME"
     "libretranslate LT_HOSTNAME"

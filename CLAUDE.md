@@ -284,7 +284,8 @@ Key functions:
 
 Common profiles:
 - `n8n`: n8n workflow automation (includes main app, worker, runner, and import services)
-- `flowise`: Flowise AI agent builder
+- `flowise`: Flowise AI agent builder (archived upstream). Image pinned to `3.1.3` in `docker-compose.yml` and `scripts/update_preview.sh` (keep both in sync): 3.1.4 crashes with SQLite and runs as non-root, which does not use the `/root/.flowise` mount. Never go back to `latest`/3.1.4; Keelflow is the upgrade path
+- `keelflow`: Keelflow, continuation of Flowise (separate service and `keelflow_data` volume; Flowise data is copied in manually, see `docs/keelflow.md`)
 - `monitoring`: Prometheus, Grafana, cAdvisor, node-exporter
 - `langfuse`: Langfuse observability (includes ClickHouse, MinIO, worker, web)
 - `cpu`, `gpu-nvidia`, `gpu-amd`: Ollama hardware profiles (mutually exclusive)
@@ -416,6 +417,7 @@ These are backed up before `git reset --hard` and restored after.
 - n8n backup/workflows: `n8n/backup/workflows/` (mounted as `/backup` in n8n containers)
 - n8n storage: Docker volume `localai_n8n_storage`
 - Flowise storage: `~/.flowise` on host (mounted from user's home directory, not a named volume)
+- Keelflow storage: Docker volume `localai_keelflow_data`
 - Custom TLS certificates: `certs/` (gitignored, mounted as `/etc/caddy/certs/`)
 - Caddy addon configs: `caddy-addon/site-*.conf` (gitignored, auto-imported)
 - Service-specific volumes: Defined in `volumes:` section at top of `docker-compose.yml`

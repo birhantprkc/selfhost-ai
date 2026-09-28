@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [1.16.0] - 2026-09-28
+
+### Added
+- **Keelflow** - New optional `keelflow` profile: a maintained continuation of Flowise, which is archived upstream and gets no more security fixes. It runs next to Flowise with its own `keelflow_data` volume; `docs/keelflow.md` shows how to move Flowise data over (issue #129).
+
+### Fixed
+- **Flowise** - Crash-looped after any install or update that pulled `latest` (3.1.4, image built 2026-07-29): it fails at startup with the default SQLite database (`TypeError: this.db.exec is not a function`) and runs as the non-root `node` user, which ignores the `~/.flowise:/root/.flowise` mount. The image is now pinned to `3.1.3`; flows and credentials in `~/.flowise` are picked up again after `make update`.
+
 ## [1.15.1] - 2026-09-23
 
 ### Fixed
