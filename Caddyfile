@@ -17,6 +17,9 @@ import /etc/caddy/addons/tls-snippet.conf
 # N8N
 {$N8N_HOSTNAME} {
     import service_tls
+    # n8n serves its unauthenticated Prometheus metrics (workflow names/IDs) on
+    # the UI port. Prometheus scrapes n8n:5678 internally, so never serve them here.
+    respond /metrics* 404
     reverse_proxy n8n:5678
 }
 
