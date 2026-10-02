@@ -375,6 +375,49 @@ if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "caddy"; then
     else
         count_warning "Caddyfile validation failed (may be fine if using default)"
     fi
+
+    # n8n's /metrics leaks workflow names/IDs and must stay internal (issue #132).
+    # --resolve asks the local Caddy, bypassing DNS: 200 means exposed, the
+    # Caddyfile block answers 404, anything else is inconclusive.
+    if is_profile_active "n8n" && [ -n "$N8N_HOSTNAME" ] && [[ "$N8N_HOSTNAME" != *"yourdomain.com" ]]; then
+        METRICS_CODE=$(curl -sk -o /dev/null -w '%{http_code}' --max-time 10 \
+            --resolve "$N8N_HOSTNAME:443:127.0.0.1" "https://$N8N_HOSTNAME/metrics")
+        case "$METRICS_CODE" in
+            200) count_error "n8n /metrics is served by Caddy on $N8N_HOSTNAME (leaks workflow names/IDs). Update the Caddyfile and run 'make restart'." ;;
+            404) count_ok "n8n /metrics is blocked by Caddy on $N8N_HOSTNAME" ;;
+            000)
+                # A tunnel route straight to n8n:5678 means Caddy never gets a
+                # certificate for this host; the tunnel check below covers it.
+                if is_profile_active "cloudflare-tunnel"; then
+                    print_info "Caddy has no TLS for $N8N_HOSTNAME (expected if the tunnel routes n8n directly) - checking via the tunnel"
+                else
+                    count_warning "No TLS response from Caddy for $N8N_HOSTNAME (certificate not issued yet?) - n8n /metrics exposure not checked"
+                fi ;;
+            *)   count_warning "n8n /metrics returned HTTP ${METRICS_CODE:-none} via Caddy (expected 404) - is n8n up and the Caddyfile current?" ;;
+        esac
+        # The documented tunnel route (http://n8n:5678) skips Caddy, so ask
+        # through the public hostname too. A Cloudflare challenge is not a block:
+        # a browser that passes it still gets the metrics.
+        if is_profile_active "cloudflare-tunnel"; then
+            METRICS_RESP=$(curl -s -o /dev/null -D - --max-time 10 \
+                -w '\n%{http_code} %{redirect_url}' "https://$N8N_HOSTNAME/metrics")
+            read -r METRICS_CODE METRICS_REDIRECT <<< "${METRICS_RESP##*$'\n'}"
+            if grep -qi '^cf-mitigated: *challenge' <<< "$METRICS_RESP"; then
+                count_warning "Cloudflare challenged the request to $N8N_HOSTNAME/metrics - a browser that passes it may still see the metrics. Add the WAF Block rule from cloudflare-instructions.md."
+            else
+                case "$METRICS_CODE" in
+                    200) count_error "n8n /metrics is public via Cloudflare Tunnel on $N8N_HOSTNAME. Add the WAF rule from cloudflare-instructions.md." ;;
+                    401|403|404) count_ok "n8n /metrics is not public on $N8N_HOSTNAME (HTTP $METRICS_CODE)" ;;
+                    3??) if [[ "$METRICS_REDIRECT" == https://*.cloudflareaccess.com/* ]]; then
+                             count_ok "n8n /metrics on $N8N_HOSTNAME is behind Cloudflare Access"
+                         else
+                             count_warning "https://$N8N_HOSTNAME/metrics redirects to ${METRICS_REDIRECT:-nowhere} - exposure via Cloudflare Tunnel not confirmed"
+                         fi ;;
+                    *)   count_warning "https://$N8N_HOSTNAME/metrics returned HTTP ${METRICS_CODE:-none} (expected 403/404) - exposure via Cloudflare Tunnel not confirmed" ;;
+                esac
+            fi
+        fi
+    fi
 else
     count_warning "Caddy container is not running"
 fi

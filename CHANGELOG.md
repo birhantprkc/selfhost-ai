@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.16.1] - 2026-10-02
+
+### Fixed
+- **n8n (security)** - `https://<N8N_HOSTNAME>/metrics` was publicly reachable without authentication on every release so far: it exposed the n8n version and process metrics, and since 1.10.0 also every workflow name and ID. Caddy now answers 404 for `/metrics` on the n8n host; Prometheus scrapes n8n over the Docker network, so Grafana dashboards and alerts are unaffected. `make doctor` reports an error if Caddy serves the endpoint, and with the `cloudflare-tunnel` profile also if it is public through the tunnel. The documented tunnel route (`http://n8n:5678`) bypasses Caddy, so `cloudflare-instructions.md` now has a WAF expression to block it (issue #132).
+
 ## [1.16.0] - 2026-09-28
 
 ### Added
